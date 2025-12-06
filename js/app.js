@@ -349,12 +349,19 @@ function applyAStarChannel(imageData) {
     const pixelCount = width * height;
     const aVals = new Float32Array(pixelCount);
     const Lvals = new Float32Array(pixelCount);
+    const eiHbVals = new Float32Array(pixelCount);
 
     // Pass 1: compute Lab, store L and a
     for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
         const { L, a } = rgbToLab(data[i], data[i+1], data[i+2]);
         Lvals[idx] = L;
         aVals[idx] = a;
+        // EI_hb = log10(R_lin / (G_lin + 0.5*B_lin))
+        const rLin = srgbToLinear(data[i]);
+        const gLin = srgbToLinear(data[i + 1]);
+        const bLin = srgbToLinear(data[i + 2]);
+        const eps = 1e-6;
+        eiHbVals[idx] = Math.log10((rLin + eps) / (gLin + 0.5 * bLin + eps));
     }
 
     // CLAHE on L* (tile ~8x8, clipLimit ~2.0)
@@ -401,16 +408,17 @@ function applyAStarChannel(imageData) {
     // Compute erythema map and min/max
     let min = Infinity;
     let max = -Infinity;
-    const eVals = new Float32Array(pixelCount);
+    const fusedVals = new Float32Array(pixelCount);
     for (let idx = 0; idx < pixelCount; idx++) {
         const L = Lvals[idx];
         const aVal = aVals[idx];
         const Lmax = dermToggle.checked ? LmaxMap[idx] : LmaxGlobal;
         const e = labErythemaValue(L, aVal, Lmax);
-        eVals[idx] = e;
+        const fused = 0.6 * e + 0.4 * eiHbVals[idx];
+        fusedVals[idx] = fused;
         if (!currentHairMask || !currentHairMask[idx]) {
-            if (e < min) min = e;
-            if (e > max) max = e;
+            if (fused < min) min = fused;
+            if (fused > max) max = fused;
         }
     }
 
@@ -425,7 +433,7 @@ function applyAStarChannel(imageData) {
             newData.data[j + 3] = 255;
             continue;
         }
-        const t = (eVals[idx] - min) / range;
+        const t = (fusedVals[idx] - min) / range;
         const g = Math.round(t * 255);
         newData.data[j] = g;
         newData.data[j + 1] = g;
