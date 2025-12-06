@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erythema Detection - Skin Inflammation Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        /* Navbar */
+        nav {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px 30px;
+            color: white;
+        }
+
+        nav h1 {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        nav p {
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            color: white;
+            font-size: 14px;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Modal for technique explanations */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 20px;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .modal h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .modal h3 {
+            color: #764ba2;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .modal p, .modal ul {
+            line-height: 1.6;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .modal ul {
+            margin-left: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 30px;
+        }
+
+        .controls-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .file-upload {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .file-upload:hover {
+            transform: scale(1.05);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Technique Selection */
+        .technique-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .technique-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .technique-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102,126,234,0.2);
+        }
+
+        .technique-item.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
+        }
+
+        .technique-item .order-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .technique-item.selected .order-badge {
+            display: flex;
+        }
+
+        .technique-item h4 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .technique-item p {
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Canvas Section */
+        .canvas-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .canvas-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .canvas-container h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .canvas-wrapper {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            display: block;
+        }
+
+        .download-btn {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box p {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Loading state */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .technique-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .canvas-section {
+                grid-template-columns: 1fr;
+            }
+
+            nav h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <h1>🔬 Erythema Detection Tool</h1>
+            <p>Advanced spectral filtering techniques for enhanced erythema detection in darker skin tones</p>
+            <div class="nav-links">
+                <button class="nav-link" onclick="showModal('erythema')">About Erythema</button>
+                <button class="nav-link" onclick="showModal('a-star')">a* Channel</button>
+                <button class="nav-link" onclick="showModal('erythema-index')">Erythema Index</button>
+                <button class="nav-link" onclick="showModal('ita')">ITA° Index</button>
+                <button class="nav-link" onclick="showModal('rgb-ratio')">RGB Ratio</button>
+                <button class="nav-link" onclick="showModal('melanin')">Melanin Filter</button>
+                <button class="nav-link" onclick="showModal('contrast-boost')">Contrast Enhancement</button>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <div class="info-box">
+                <p><strong>Note:</strong> Detecting erythema (skin redness/inflammation) in darker skin tones is challenging due to melanin masking. This tool applies various color-space transformations and spectral filters to enhance the visibility of inflammation markers.</p>
+            </div>
+
+            <div class="controls-section">
+                <div class="control-group">
+                    <label for="imageUpload">Step 1: Upload an Image</label>
+                    <label for="imageUpload" class="file-upload">
+                        📁 Choose Image
+                    </label>
+                    <input type="file" id="imageUpload" accept="image/*">
+                    <span id="fileName" style="margin-left: 15px; color: #666;"></span>
+                </div>
+
+                <div class="control-group">
+                    <label>Step 2: Select Techniques (click to select, order matters)</label>
+                    <div class="technique-grid" id="techniqueGrid">
+                        <div class="technique-item" data-technique="a-star">
+                            <div class="order-badge">1</div>
+                            <h4>a* Channel (Lab)</h4>
+                            <p>Isolates red-green chromaticity</p>
+                        </div>
+                        <div class="technique-item" data-technique="erythema-index">
+                            <div class="order-badge">2</div>
+                            <h4>Erythema Index (EI)</h4>
+                            <p>Quantifies redness intensity</p>
+                        </div>
+                        <div class="technique-item" data-technique="ita">
+                            <div class="order-badge">3</div>
+                            <h4>ITA° (Typology Angle)</h4>
+                            <p>Adjusts for skin brightness</p>
+                        </div>
+                        <div class="technique-item" data-technique="rgb-ratio">
+                            <div class="order-badge">4</div>
+                            <h4>RGB Ratio Enhancement</h4>
+                            <p>Emphasizes red channel</p>
+                        </div>
+                        <div class="technique-item" data-technique="melanin-filter">
+                            <div class="order-badge">5</div>
+                            <h4>Melanin Compensation</h4>
+                            <p>Reduces melanin masking</p>
+                        </div>
+                        <div class="technique-item" data-technique="contrast-boost">
+                            <div class="order-badge">6</div>
+                            <h4>Contrast Enhancement</h4>
+                            <p>Increases visual clarity</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Step 3: Apply Filters</label>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="applyFilters()">🎨 Apply Selected Filters</button>
+                        <button class="btn btn-secondary" onclick="resetFilters()">🔄 Reset</button>
+                        <button class="btn btn-secondary" onclick="clearSelection()">❌ Clear Selection</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">Processing image...</div>
+
+            <div class="canvas-section" id="canvasSection" style="display: none;">
+                <div class="canvas-container">
+                    <h3>Original Image</h3>
+                    <div class="canvas-wrapper">
+                        <canvas id="originalCanvas"></canvas>
+                    </div>
+                </div>
+                <div class="canvas-container">
+                    <h3>Processed Image</h3>
+                    <div class="canvas-wrapper">
+                        <canvas id="processedCanvas"></canvas>
+                    </div>
+                    <button class="download-btn" onclick="downloadProcessed()">💾 Download Result</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals for technique explanations -->
+    <div id="modalErythema" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('erythema')">&times;</span>
+            <h2>About Erythema Detection</h2>
+            <p>Erythema is the reddening of the skin caused by increased blood flow in superficial capillaries. It's a key indicator of inflammation, allergic reactions, or irritation.</p>
+            
+            <h3>Challenges in Darker Skin</h3>
+            <p>Detecting erythema in darker skin tones is particularly challenging because:</p>
+            <ul>
+                <li>Melanin absorbs light across a broad spectrum, masking the red coloration</li>
+                <li>Visual assessment alone can miss subtle inflammatory changes</li>
+                <li>Standard RGB imaging may not capture the full spectral signature</li>
+                <li>Individual typology angle (ITA) varies significantly across populations</li>
+            </ul>
+
+            <h3>Solution Approach</h3>
+            <p>This tool employs multiple computational techniques that transform and analyze images in different color spaces to enhance the visibility of erythema markers, making inflammation detection more reliable across all skin tones.</p>
+        </div>
+    </div>
+
+    <div id="modalAStar" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('a-star')">&times;</span>
+            <h2>a* Channel (Lab Color Space)</h2>
+            
+            <h3>What is it?</h3>
+            <p>The a* channel is part of the CIE Lab color space, which separates color information into:</p>
+            <ul>
+                <li><strong>L*</strong>: Lightness (0-100)</li>
+                <li><strong>a*</strong>: Green-Red axis (negative to positive)</li>
+                <li><strong>b*</strong>: Blue-Yellow axis (negative to positive)</li>
+            </ul>
+
+            <h3>Why it's useful for erythema</h3>
+            <p>The a* channel isolates red-green chromaticity independent of lightness, making it particularly effective for detecting redness regardless of skin tone. Positive a* values indicate redness, which correlates with erythema.</p>
+
+            <h3>Application</h3>
+            <p>This technique converts the RGB image to Lab color space, extracts the a* channel, and maps it to a visual representation where increased redness becomes more apparent. It's often used as a baseline technique and can be combined with other methods.</p>
+        </div>
+    </div>
+
+    <div id="modalErythemaIndex" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('erythema-index')">&times;</span>
+            <h2>Erythema Index (EI)</h2>
+            
+            <h3>What is it?</h3>
+            <p>The Erythema Index is a quantitative measure of skin redness calculated from color space coordinates. It provides a numerical value that correlates with the severity of erythema.</p>
+
+            <h3>Calculation Method</h3>
+            <p>The EI is typically calculated using the formula:</p>
+            <p><strong>EI = 100 × (a* + 1.5 × b*) / L*</strong></p>
+            <p>This formula emphasizes the red component while considering overall brightness and yellow tones.</p>
+
+            <h3>Clinical Relevance</h3>
+            <ul>
+                <li>Provides objective, reproducible measurements</li>
+                <li>Useful for tracking changes over time</li>
+                <li>Can detect subtle changes not visible to the naked eye</li>
+                <li>Helps standardize assessment across different skin types</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="modalITA" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('ita')">&times;</span>
+            <h2>Individual Typology Angle (ITA°)</h2>
+            
+            <h3>What is it?</h3>
+            <p>ITA° is a measure used to classify skin color and adjust for baseline pigmentation. It's calculated from Lab color space values and helps normalize measurements across different skin tones.</p>
+
+            <h3>Formula</h3>
+            <p><strong>ITA° = [arctan((L* - 50) / b*)] × (180/π)</strong></p>
+
+            <h3>Skin Type Categories</h3>
+            <ul>
+                <li>ITA° > 55°: Very light</li>
+                <li>41° to 55°: Light</li>
+                <li>28° to 41°: Intermediate</li>
+                <li>10° to 28°: Tan</li>
+                <li>-30° to 10°: Brown</li>
+                <li>< -30°: Dark</li>
+            </ul>
+
+            <h3>Application in Erythema Detection</h3>
+            <p>By incorporating ITA° into the analysis, we can adjust erythema detection sensitivity based on baseline skin pigmentation, improving accuracy across all Fitzpatrick skin types.</p>
+        </div>
+    </div>
+
+    <div id="modalRGBRatio" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('rgb-ratio')">&times;</span>
+            <h2>RGB Ratio Enhancement</h2>
+            
+            <h3>What is it?</h3>
+            <p>This technique analyzes the relative proportions of Red, Green, and Blue channels to emphasize areas where red dominates, which is characteristic of erythema.</p>
+
+            <h3>Method</h3>
+            <p>The technique calculates ratios such as:</p>
+            <ul>
+                <li>R/(G+B) ratio: Emphasizes red relative to other channels</li>
+                <li>(R-G)/(R+G) normalization: Isolates red-green difference</li>
+                <li>Enhanced red channel with green subtraction</li>
+            </ul>
+
+            <h3>Advantages</h3>
+            <ul>
+                <li>Simple and computationally efficient</li>
+                <li>Works directly in RGB space (no conversion needed)</li>
+                <li>Effective for highlighting areas of increased blood flow</li>
+                <li>Can be tuned with different ratio formulas</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="modalMelanin" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('melanin')">&times;</span>
+            <h2>Melanin Compensation Filter</h2>
+            
+            <h3>The Challenge</h3>
+            <p>Melanin is the pigment responsible for skin color and absorbs light broadly across the visible spectrum. This absorption masks the hemoglobin signature that indicates erythema, making detection difficult in darker skin.</p>
+
+            <h3>Compensation Strategy</h3>
+            <p>This filter attempts to mathematically compensate for melanin absorption by:</p>
+            <ul>
+                <li>Estimating baseline melanin content from L* and b* values</li>
+                <li>Applying inverse absorption models</li>
+                <li>Enhancing the hemoglobin-specific spectral features</li>
+                <li>Adjusting contrast in the red wavelength range</li>
+            </ul>
+
+            <h3>Research Basis</h3>
+            <p>This approach is based on research into multispectral imaging and independent component analysis (ICA) that separates melanin and hemoglobin contributions to skin color.</p>
+
+            <h3>Note</h3>
+            <p>While this technique can enhance visualization, it should be used in conjunction with clinical assessment. It's particularly useful when combined with other techniques in a multi-step pipeline.</p>
+        </div>
+    </div>
+
+    <div id="modalContrastBoost" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('contrast-boost')">&times;</span>
+            <h2>Contrast Enhancement</h2>
+            
+            <h3>What is it?</h3>
+            <p>Contrast enhancement is a fundamental image processing technique that increases the difference between light and dark regions, making features more visually distinct.</p>
+
+            <h3>How it works</h3>
+            <p>This technique applies a linear contrast stretch to each color channel:</p>
+            <ul>
+                <li>Pixels darker than middle gray become darker</li>
+                <li>Pixels lighter than middle gray become lighter</li>
+                <li>The overall dynamic range is expanded</li>
+                <li>Subtle variations become more apparent</li>
+            </ul>
+
+            <h3>Application to Erythema Detection</h3>
+            <p>When used in combination with other filters, contrast enhancement can:</p>
+            <ul>
+                <li>Amplify subtle color differences introduced by previous filters</li>
+                <li>Make erythema markers more visually prominent</li>
+                <li>Improve the interpretability of processed images</li>
+                <li>Help distinguish between different levels of inflammation</li>
+            </ul>
+
+            <h3>Best Practices</h3>
+            <p>Contrast enhancement is most effective when applied as the final step in a processing pipeline, after color-space transformations and spectral filtering have isolated the erythema signature.</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let originalImage = null;
+        let selectedTechniques = [];
+        const originalCanvas = document.getElementById('originalCanvas');
+        const processedCanvas = document.getElementById('processedCanvas');
+        const originalCtx = originalCanvas.getContext('2d');
+        const processedCtx = processedCanvas.getContext('2d');
+
+        // Constants for image processing
+        const CONTRAST_ENHANCEMENT_FACTOR = 1.5;
+        
+        // ITA thresholds for skin type classification (in degrees)
+        const ITA_DARK_THRESHOLD = 10;      // Below this: dark to very dark skin
+        const ITA_TAN_THRESHOLD = 28;       // Below this: tan skin
+        
+        // Enhancement factors based on skin type
+        const DARK_SKIN_ENHANCEMENT = 1.8;   // Higher enhancement for darker skin
+        const TAN_SKIN_ENHANCEMENT = 1.4;    // Moderate enhancement for tan skin
+        const LIGHT_SKIN_ENHANCEMENT = 1.0;  // Minimal enhancement for light skin
+
+        // File upload handler
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        originalImage = img;
+                        displayOriginalImage();
+                        document.getElementById('canvasSection').style.display = 'grid';
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Display original image
+        function displayOriginalImage() {
+            const maxWidth = 500;
+            const maxHeight = 500;
+            let width = originalImage.width;
+            let height = originalImage.height;
+
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width *= ratio;
+                height *= ratio;
+            }
+
+            originalCanvas.width = width;
+            originalCanvas.height = height;
+            processedCanvas.width = width;
+            processedCanvas.height = height;
+
+            originalCtx.drawImage(originalImage, 0, 0, width, height);
+        }
+
+        // Technique selection
+        document.getElementById('techniqueGrid').addEventListener('click', function(e) {
+            const item = e.target.closest('.technique-item');
+            if (!item) return;
+
+            const technique = item.dataset.technique;
+            
+            if (item.classList.contains('selected')) {
+                // Deselect
+                item.classList.remove('selected');
+                const index = selectedTechniques.indexOf(technique);
+                selectedTechniques.splice(index, 1);
+            } else {
+                // Select
+                item.classList.add('selected');
+                selectedTechniques.push(technique);
+            }
+
+            updateOrderBadges();
+        });
+
+        function updateOrderBadges() {
+            const items = document.querySelectorAll('.technique-item');
+            items.forEach(item => {
+                const technique = item.dataset.technique;
+                const index = selectedTechniques.indexOf(technique);
+                if (index !== -1) {
+                    item.querySelector('.order-badge').textContent = index + 1;
+                }
+            });
+        }
+
+        function clearSelection() {
+            selectedTechniques = [];
+            document.querySelectorAll('.technique-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+
+        function resetFilters() {
+            if (originalImage) {
+                displayOriginalImage();
+                processedCtx.clearRect(0, 0, processedCanvas.width, processedCanvas.height);
+                processedCtx.drawImage(originalCanvas, 0, 0);
+            }
+        }
+
+        // Apply filters
+        function applyFilters() {
+            if (!originalImage) {
+                alert('Please upload an image first!');
+                return;
+            }
+
+            if (selectedTechniques.length === 0) {
+                alert('Please select at least one technique!');
+                return;
+            }
+
+            document.getElementById('loading').classList.add('active');
+
+            setTimeout(() => {
+                // Start with original image data
+                let imageData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
+                
+                // Apply techniques in order
+                for (const technique of selectedTechniques) {
+                    imageData = applyTechnique(imageData, technique);
+                }
+
+                // Display result
+                processedCtx.putImageData(imageData, 0, 0);
+                document.getElementById('loading').classList.remove('active');
+            }, 100);
+        }
+
+        // Apply individual technique
+        function applyTechnique(imageData, technique) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+
+            switch(technique) {
+                case 'a-star':
+                    return applyAStarChannel(imageData);
+                case 'erythema-index':
+                    return applyErythemaIndex(imageData);
+                case 'ita':
+                    return applyITA(imageData);
+                case 'rgb-ratio':
+                    return applyRGBRatio(imageData);
+                case 'melanin-filter':
+                    return applyMelaninFilter(imageData);
+                case 'contrast-boost':
+                    return applyContrastBoost(imageData);
+                default:
+                    return imageData;
+            }
+        }
+
+        // RGB to Lab conversion
+        function rgbToLab(r, g, b) {
+            // Normalize RGB
+            r = r / 255;
+            g = g / 255;
+            b = b / 255;
+
+            // RGB to XYZ
+            r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+            g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+            b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+
+            let x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
+            let y = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 1.00000;
+            let z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+
+            // XYZ to Lab
+            x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787 * x) + 16/116;
+            y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787 * y) + 16/116;
+            z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787 * z) + 16/116;
+
+            const L = (116 * y) - 16;
+            const a = 500 * (x - y);
+            const bLab = 200 * (y - z);
+
+            return { L, a, b: bLab };
+        }
+
+        // Lab to RGB conversion
+        function labToRgb(L, a, bLab) {
+            let y = (L + 16) / 116;
+            let x = a / 500 + y;
+            let z = y - bLab / 200;
+
+            x = 0.95047 * ((x * x * x > 0.008856) ? x * x * x : (x - 16/116) / 7.787);
+            y = 1.00000 * ((y * y * y > 0.008856) ? y * y * y : (y - 16/116) / 7.787);
+            z = 1.08883 * ((z * z * z > 0.008856) ? z * z * z : (z - 16/116) / 7.787);
+
+            let r = x *  3.2406 + y * -1.5372 + z * -0.4986;
+            let g = x * -0.9689 + y *  1.8758 + z *  0.0415;
+            let b = x *  0.0557 + y * -0.2040 + z *  1.0570;
+
+            r = r > 0.0031308 ? 1.055 * Math.pow(r, 1/2.4) - 0.055 : 12.92 * r;
+            g = g > 0.0031308 ? 1.055 * Math.pow(g, 1/2.4) - 0.055 : 12.92 * g;
+            b = b > 0.0031308 ? 1.055 * Math.pow(b, 1/2.4) - 0.055 : 12.92 * b;
+
+            return {
+                r: Math.max(0, Math.min(255, Math.round(r * 255))),
+                g: Math.max(0, Math.min(255, Math.round(g * 255))),
+                b: Math.max(0, Math.min(255, Math.round(b * 255)))
+            };
+        }
+
+        // a* Channel filter
+        function applyAStarChannel(imageData) {
+            const data = imageData.data;
+            const newData = new ImageData(imageData.width, imageData.height);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const lab = rgbToLab(data[i], data[i+1], data[i+2]);
+                
+                // Normalize a* to 0-255 range (a* typically ranges from -128 to 127)
+                const aValue = Math.max(0, Math.min(255, (lab.a + 128)));
+                
+                // Create a red-enhanced image based on a* value
+                const intensity = aValue / 255;
+                newData.data[i] = Math.min(255, aValue * 1.5);
+                newData.data[i+1] = Math.max(0, lab.L - aValue * 0.5);
+                newData.data[i+2] = Math.max(0, lab.L - aValue * 0.5);
+                newData.data[i+3] = 255;
+            }
+            
+            return newData;
+        }
+
+        // Erythema Index filter
+        function applyErythemaIndex(imageData) {
+            const data = imageData.data;
+            const newData = new ImageData(imageData.width, imageData.height);
+            let maxEI = -Infinity;
+            let minEI = Infinity;
+            const eiValues = [];
+            
+            // Calculate EI for all pixels
+            for (let i = 0; i < data.length; i += 4) {
+                const lab = rgbToLab(data[i], data[i+1], data[i+2]);
+                const ei = lab.L > 0 ? 100 * (lab.a + 1.5 * lab.b) / lab.L : 0;
+                eiValues.push(ei);
+                maxEI = Math.max(maxEI, ei);
+                minEI = Math.min(minEI, ei);
+            }
+            
+            // Normalize and apply (protect against division by zero)
+            const range = maxEI - minEI;
+            for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+                const normalizedEI = range > 0 ? (eiValues[j] - minEI) / range : 0;
+                const heat = normalizedEI * 255;
+                
+                // Heat map visualization
+                if (normalizedEI < 0.33) {
+                    newData.data[i] = 0;
+                    newData.data[i+1] = heat * 3;
+                    newData.data[i+2] = 255;
+                } else if (normalizedEI < 0.66) {
+                    newData.data[i] = (normalizedEI - 0.33) * 3 * 255;
+                    newData.data[i+1] = 255;
+                    newData.data[i+2] = (0.66 - normalizedEI) * 3 * 255;
+                } else {
+                    newData.data[i] = 255;
+                    newData.data[i+1] = (1 - normalizedEI) * 3 * 255;
+                    newData.data[i+2] = 0;
+                }
+                newData.data[i+3] = 255;
+            }
+            
+            return newData;
+        }
+
+        // ITA filter
+        function applyITA(imageData) {
+            const data = imageData.data;
+            const newData = new ImageData(imageData.width, imageData.height);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const lab = rgbToLab(data[i], data[i+1], data[i+2]);
+                
+                // Calculate ITA with division by zero protection
+                const ita = lab.b !== 0 ? Math.atan((lab.L - 50) / lab.b) * (180 / Math.PI) : 0;
+                
+                // Adjust erythema detection based on ITA
+                // Lower ITA (darker skin) gets more enhancement
+                const enhancement = ita < ITA_DARK_THRESHOLD ? DARK_SKIN_ENHANCEMENT : 
+                                  (ita < ITA_TAN_THRESHOLD ? TAN_SKIN_ENHANCEMENT : LIGHT_SKIN_ENHANCEMENT);
+                
+                newData.data[i] = Math.min(255, data[i] * enhancement);
+                newData.data[i+1] = data[i+1];
+                newData.data[i+2] = data[i+2];
+                newData.data[i+3] = 255;
+            }
+            
+            return newData;
+        }
+
+        // RGB Ratio filter
+        function applyRGBRatio(imageData) {
+            const data = imageData.data;
+            const newData = new ImageData(imageData.width, imageData.height);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i+1];
+                const b = data[i+2];
+                
+                // Calculate R/(G+B) ratio
+                const ratio = (g + b) > 0 ? r / (g + b) : 0;
+                const normalized = Math.min(1, ratio / 2) * 255;
+                
+                newData.data[i] = normalized;
+                newData.data[i+1] = Math.max(0, g - normalized * 0.5);
+                newData.data[i+2] = Math.max(0, b - normalized * 0.5);
+                newData.data[i+3] = 255;
+            }
+            
+            return newData;
+        }
+
+        // Melanin compensation filter
+        function applyMelaninFilter(imageData) {
+            const data = imageData.data;
+            const newData = new ImageData(imageData.width, imageData.height);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const lab = rgbToLab(data[i], data[i+1], data[i+2]);
+                
+                // Estimate melanin (inverse relationship with L*)
+                const melaninFactor = 1 + (100 - lab.L) / 100;
+                
+                // Compensate by enhancing a* channel
+                const enhancedA = lab.a * melaninFactor;
+                
+                // Convert back to RGB
+                const rgb = labToRgb(lab.L, enhancedA, lab.b);
+                newData.data[i] = rgb.r;
+                newData.data[i+1] = rgb.g;
+                newData.data[i+2] = rgb.b;
+                newData.data[i+3] = 255;
+            }
+            
+            return newData;
+        }
+
+        // Contrast boost filter
+        function applyContrastBoost(imageData) {
+            const data = imageData.data;
+            const newData = new ImageData(imageData.width, imageData.height);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                newData.data[i] = Math.min(255, Math.max(0, CONTRAST_ENHANCEMENT_FACTOR * (data[i] - 128) + 128));
+                newData.data[i+1] = Math.min(255, Math.max(0, CONTRAST_ENHANCEMENT_FACTOR * (data[i+1] - 128) + 128));
+                newData.data[i+2] = Math.min(255, Math.max(0, CONTRAST_ENHANCEMENT_FACTOR * (data[i+2] - 128) + 128));
+                newData.data[i+3] = 255;
+            }
+            
+            return newData;
+        }
+
+        // Download processed image
+        function downloadProcessed() {
+            const link = document.createElement('a');
+            link.download = 'erythema-processed.png';
+            link.href = processedCanvas.toDataURL();
+            link.click();
+        }
+
+        // Helper function to convert technique name to modal ID
+        function getModalId(techniqueName) {
+            return 'modal' + techniqueName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+        }
+
+        // Modal functions
+        function showModal(type) {
+            const modal = document.getElementById(getModalId(type));
+            if (modal) {
+                modal.style.display = 'block';
+            }
+        }
+
+        function closeModal(type) {
+            const modal = document.getElementById(getModalId(type));
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
