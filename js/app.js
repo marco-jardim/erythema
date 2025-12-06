@@ -15,6 +15,7 @@ const compareSlider = document.getElementById('compareSlider');
 const labToggle = document.getElementById('labToggle');
 const hairToggle = document.getElementById('hairToggle');
 const dermToggle = document.getElementById('dermToggle');
+const dermBtn = document.getElementById('dermBtn');
 const labViewBtn = document.getElementById('labViewBtn');
 const fusedViewBtn = document.getElementById('fusedViewBtn');
 const labPreviewCanvas = document.getElementById('labPreviewCanvas');
@@ -42,6 +43,8 @@ let lastEIHbImageData = null;
 let lastFusedHeatmapImageData = null;
 let resultViewMode = 'processed';
 let hairApplied = false;
+const EARLY_SET = new Set(['hair-reduction', 'melanin-filter']);
+const LATE_SET = new Set(['contrast-boost']);
 
 // File upload handler
 document.getElementById('imageUpload').addEventListener('change', function(e) {
@@ -65,13 +68,8 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
 
 function collectSelectedTechniques() {
     const items = Array.from(document.querySelectorAll('.technique-item.selected'));
-    // Use order badge if present, fallback to DOM order
-    const ordered = items.sort((a, b) => {
-        const aNum = parseInt(a.querySelector('.order-badge').textContent) || Number.MAX_SAFE_INTEGER;
-        const bNum = parseInt(b.querySelector('.order-badge').textContent) || Number.MAX_SAFE_INTEGER;
-        return aNum - bNum;
-    });
-    return ordered.map(item => item.dataset.technique);
+    // Preserve click order by using DOM order of selection; execution order handled later
+    return items.map(item => item.dataset.technique);
 }
 
 // Technique selection
@@ -124,10 +122,21 @@ function displayOriginalImage() {
 }
 
 function updateOrderBadges() {
+    // Determine execution order: early -> main -> late, preserving relative order inside each set
+    const early = [];
+    const main = [];
+    const late = [];
+    selectedTechniques.forEach(t => {
+        if (EARLY_SET.has(t)) early.push(t);
+        else if (LATE_SET.has(t)) late.push(t);
+        else main.push(t);
+    });
+    const execution = [...early, ...main, ...late];
+
     const items = document.querySelectorAll('.technique-item');
     items.forEach(item => {
         const technique = item.dataset.technique;
-        const index = selectedTechniques.indexOf(technique);
+        const index = execution.indexOf(technique);
         if (index !== -1) {
             item.querySelector('.order-badge').textContent = index + 1;
         } else {
@@ -1092,6 +1101,7 @@ dermToggle.addEventListener('change', () => {
     setSliderRatio(0.5);
     applySliderMask();
     resultViewMode = dermToggle.checked ? 'fused' : 'processed';
+    dermBtn.classList.toggle('active', dermToggle.checked);
     redrawProcessed();
 });
 
@@ -1106,6 +1116,16 @@ fusedViewBtn.addEventListener('click', () => {
     if (fusedViewBtn.disabled) return;
     resultViewMode = 'fused';
     updateViewButtons();
+    redrawProcessed();
+});
+
+dermBtn.addEventListener('click', () => {
+    dermToggle.checked = !dermToggle.checked;
+    dermBtn.classList.toggle('active', dermToggle.checked);
+    dermBtn.textContent = dermToggle.checked ? '🩺 Derm mode ON' : '🩺 Derm mode';
+    setSliderRatio(0.5);
+    applySliderMask();
+    resultViewMode = dermToggle.checked ? 'fused' : 'processed';
     redrawProcessed();
 });
 
