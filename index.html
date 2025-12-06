@@ -87,15 +87,11 @@
 
             <div class="canvas-section" id="canvasSection" style="display: none;">
                 <div class="canvas-container">
-                    <h3>Original Image</h3>
-                    <div class="canvas-wrapper">
-                        <canvas id="originalCanvas"></canvas>
-                    </div>
-                </div>
-                <div class="canvas-container">
-                    <h3>Processed Image</h3>
-                    <div class="canvas-wrapper">
+                    <h3>Before / After</h3>
+                    <div class="overlap-wrapper" id="overlapWrapper">
                         <canvas id="processedCanvas"></canvas>
+                        <canvas id="originalCanvas"></canvas>
+                        <div id="compareSlider" class="slider-handle" aria-label="Reveal processed image"></div>
                     </div>
                     <button class="download-btn" onclick="downloadProcessed()">💾 Download Result</button>
                 </div>
@@ -138,10 +134,10 @@
             </ul>
 
             <h3>Why it's useful for erythema</h3>
-            <p>The a* channel isolates red-green chromaticity independent of lightness, making it particularly effective for detecting redness regardless of skin tone. Positive a* values indicate redness, which correlates with erythema.</p>
+            <p>This tool follows the literature outline: it builds an erythema map using <strong>E = (L<sub>max</sub> – L) × a*</strong>, where L<sub>max</sub> is the brightest L* in the image (or 100 if unavailable). The map is then normalized 0–255 for visualization. This amplifies redness (a* &gt; 0) more in darker areas (lower L*), compensating for melanin masking.</p>
 
             <h3>Application</h3>
-            <p>This technique converts the RGB image to Lab color space, extracts the a* channel, and maps it to a visual representation where increased redness becomes more apparent. It's often used as a baseline technique and can be combined with other methods.</p>
+            <p>The pipeline converts RGB to Lab, finds L<sub>max</sub>, computes the per-pixel map <em>(L<sub>max</sub> − L) × a*</em>, and normalizes it to grayscale. Higher values highlight erythema while accounting for skin brightness.</p>
         </div>
     </div>
 

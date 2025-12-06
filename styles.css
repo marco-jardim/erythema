@@ -253,9 +253,6 @@ input[type="file"] {
 
 /* Canvas Section */
 .canvas-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
     margin-top: 30px;
 }
 
@@ -299,6 +296,47 @@ canvas {
 
 .download-btn:hover {
     background: #218838;
+}
+
+.overlap-wrapper {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.overlap-wrapper canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.slider-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: #ffcc00;
+    cursor: ew-resize;
+    box-shadow: 0 0 8px rgba(0,0,0,0.25);
+}
+
+.slider-handle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    background: #ffcc00;
+    border: 2px solid #b58900;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .info-box {

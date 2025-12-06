@@ -53,6 +53,10 @@ export function labToRgb(L, a, bLab) {
     };
 }
 
+// Lab erythema contribution per pixel using (L_max - L) * a
+export function labErythemaValue(L, a, Lmax) {
+    return (Lmax - L) * a;
+}
 // Erythema Index using the classic reflectance ratio definition:
 // EI = log10(R / G), with channel values serving as a proxy for reflectance.
 export function calculateErythemaIndex(r, g) {

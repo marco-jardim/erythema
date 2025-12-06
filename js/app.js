@@ -1,4 +1,4 @@
-import { rgbToLab, labToRgb, calculateErythemaIndex, computeIta, CONTRAST_ENHANCEMENT_FACTOR } from './techniques.js';
+import { rgbToLab, labToRgb, calculateErythemaIndex, computeIta, CONTRAST_ENHANCEMENT_FACTOR, labErythemaValue } from './techniques.js';
 
 // Global state
 let originalImage = null;
@@ -9,6 +9,8 @@ const originalCanvas = document.getElementById('originalCanvas');
 const processedCanvas = document.getElementById('processedCanvas');
 const originalCtx = originalCanvas.getContext('2d');
 const processedCtx = processedCanvas.getContext('2d');
+const overlapWrapper = document.getElementById('overlapWrapper');
+const compareSlider = document.getElementById('compareSlider');
 
 // ITA thresholds for skin type classification (in degrees)
 const ITA_DARK_THRESHOLD = 10;      // Below this: dark to very dark skin
@@ -18,6 +20,9 @@ const ITA_TAN_THRESHOLD = 28;       // Below this: tan skin
 const DARK_SKIN_ENHANCEMENT = 1.8;   // Higher enhancement for darker skin
 const TAN_SKIN_ENHANCEMENT = 1.4;    // Moderate enhancement for tan skin
 const LIGHT_SKIN_ENHANCEMENT = 1.0;  // Minimal enhancement for light skin
+
+// Slider state
+let sliderRatio = 1; // 1 = show only original (slider at right), 0 = only processed
 
 // File upload handler
 document.getElementById('imageUpload').addEventListener('change', function(e) {
@@ -30,7 +35,8 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
             img.onload = function() {
                 originalImage = img;
                 displayOriginalImage();
-                document.getElementById('canvasSection').style.display = 'grid';
+                document.getElementById('canvasSection').style.display = 'block';
+                resetSliderPosition();
             };
             img.src = event.target.result;
         };
@@ -68,7 +74,14 @@ function displayOriginalImage() {
     processedCanvas.width = width;
     processedCanvas.height = height;
 
+    overlapWrapper.style.width = `${width}px`;
+    overlapWrapper.style.height = `${height}px`;
+
     originalCtx.drawImage(originalImage, 0, 0, width, height);
+
+    // Initially hide processed layer until filters run
+    processedCtx.clearRect(0, 0, width, height);
+    applySliderMask();
 }
 
 function updateOrderBadges() {
@@ -97,6 +110,7 @@ function resetFilters() {
         displayOriginalImage();
         processedCtx.clearRect(0, 0, processedCanvas.width, processedCanvas.height);
         processedCtx.drawImage(originalCanvas, 0, 0);
+        resetSliderPosition();
     }
 }
 
@@ -126,6 +140,7 @@ function applyFilters() {
         // Display result
         processedCtx.putImageData(imageData, 0, 0);
         document.getElementById('loading').classList.remove('active');
+        animateSliderToCenter();
     }, 100);
 }
 
@@ -152,21 +167,45 @@ function applyTechnique(imageData, technique) {
 // a* Channel filter
 function applyAStarChannel(imageData) {
     const data = imageData.data;
-    const newData = new ImageData(imageData.width, imageData.height);
-    
-    for (let i = 0; i < data.length; i += 4) {
-        const lab = rgbToLab(data[i], data[i+1], data[i+2]);
-        
-        // Normalize a* to 0-255 range (a* typically ranges from -128 to 127)
-        const aValue = Math.max(0, Math.min(255, (lab.a + 128)));
-        
-        // Create a red-enhanced image based on a* value
-        newData.data[i] = Math.min(255, aValue * 1.5);
-        newData.data[i+1] = Math.max(0, lab.L - aValue * 0.5);
-        newData.data[i+2] = Math.max(0, lab.L - aValue * 0.5);
-        newData.data[i+3] = 255;
+    const width = imageData.width;
+    const height = imageData.height;
+    const pixelCount = width * height;
+    const values = new Float32Array(pixelCount);
+
+    // Pass 1: compute Lmax from the image
+    let Lmax = -Infinity;
+    for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
+        const { L } = rgbToLab(data[i], data[i+1], data[i+2]);
+        values[idx] = L; // store temporarily
+        if (L > Lmax) Lmax = L;
     }
-    
+    if (!Number.isFinite(Lmax)) Lmax = 100; // fallback
+
+    // Pass 2: compute erythema map values and min/max
+    let min = Infinity;
+    let max = -Infinity;
+    for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
+        const { a } = rgbToLab(data[i], data[i+1], data[i+2]);
+        const L = values[idx];
+        const e = labErythemaValue(L, a, Lmax);
+        values[idx] = e;
+        if (e < min) min = e;
+        if (e > max) max = e;
+    }
+
+    const range = Math.max(1e-6, max - min);
+    const newData = new ImageData(width, height);
+
+    // Pass 3: normalize to 0-255 grayscale
+    for (let idx = 0, j = 0; idx < pixelCount; idx++, j += 4) {
+        const t = (values[idx] - min) / range;
+        const g = Math.round(t * 255);
+        newData.data[j] = g;
+        newData.data[j + 1] = g;
+        newData.data[j + 2] = g;
+        newData.data[j + 3] = 255;
+    }
+
     return newData;
 }
 
@@ -333,6 +372,67 @@ window.onclick = function(event) {
         event.target.style.display = 'none';
     }
 };
+
+// Slider utilities
+function clamp01(v) {
+    return Math.max(0, Math.min(1, v));
+}
+
+function setSliderRatio(ratio) {
+    sliderRatio = clamp01(ratio);
+    const percent = sliderRatio * 100;
+    // Clip the top (original) canvas so it only shows left portion
+    originalCanvas.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
+    // Position the slider bar
+    compareSlider.style.left = `calc(${percent}% - 2px)`;
+}
+
+function resetSliderPosition() {
+    setSliderRatio(1);
+}
+
+function animateSliderToCenter() {
+    const start = sliderRatio;
+    const end = 0.5;
+    const duration = 700;
+    const startTime = performance.now();
+
+    function step(now) {
+        const t = Math.min(1, (now - startTime) / duration);
+        // easeOutCubic
+        const eased = 1 - Math.pow(1 - t, 3);
+        const current = start + (end - start) * eased;
+        setSliderRatio(current);
+        if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
+function applySliderMask() {
+    // ensure clip is applied based on current ratio (after resize)
+    setSliderRatio(sliderRatio);
+}
+
+// Drag handling
+let dragging = false;
+
+compareSlider.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    compareSlider.setPointerCapture(e.pointerId);
+});
+
+window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const rect = overlapWrapper.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    setSliderRatio(ratio);
+});
+
+window.addEventListener('pointerup', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    compareSlider.releasePointerCapture(e.pointerId);
+});
 
 // Wire up nav buttons and close icons after module load
 document.querySelectorAll('.nav-link[data-modal]').forEach(btn => {
