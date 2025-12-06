@@ -14,6 +14,7 @@ const overlapWrapper = document.getElementById('overlapWrapper');
 const compareSlider = document.getElementById('compareSlider');
 const labToggle = document.getElementById('labToggle');
 const hairToggle = document.getElementById('hairToggle');
+const dermToggle = document.getElementById('dermToggle');
 const labPreviewCanvas = document.getElementById('labPreviewCanvas');
 const heatmapPreviewCanvas = document.getElementById('heatmapPreviewCanvas');
 const labPreviewCtx = labPreviewCanvas.getContext('2d');
@@ -36,6 +37,7 @@ let lastProcessedImageData = null;
 let lastLabErythemaImageData = null;
 let currentHairMask = null;
 let lastEIHbImageData = null;
+let lastFusedHeatmapImageData = null;
 
 // File upload handler
 document.getElementById('imageUpload').addEventListener('change', function(e) {
@@ -156,22 +158,23 @@ function applyFilters() {
         lastLabErythemaImageData = null;
         currentHairMask = null;
         lastEIHbImageData = null;
+        lastFusedHeatmapImageData = null;
 
         // Early filters executed up front regardless of later order
         const remainingTechniques = [...selectedTechniques];
 
-        const hairIdx = remainingTechniques.indexOf('hair-reduction');
+        const hairIdx = dermToggle.checked ? 0 : remainingTechniques.indexOf('hair-reduction');
         if (hairIdx !== -1) {
             const cleaned = reduceHairPerturbation(imageData);
             imageData = cleaned.cleanedImage;
             currentHairMask = cleaned.mask;
-            remainingTechniques.splice(hairIdx, 1);
+            if (hairIdx < remainingTechniques.length) remainingTechniques.splice(hairIdx, 1);
         }
 
         const melIdx = remainingTechniques.indexOf('melanin-filter');
-        if (melIdx !== -1) {
+        if (melIdx !== -1 || dermToggle.checked) {
             imageData = applyMelaninFilter(imageData);
-            remainingTechniques.splice(melIdx, 1);
+            if (melIdx !== -1) remainingTechniques.splice(melIdx, 1);
         }
 
         const mapBase = imageData;
@@ -179,6 +182,11 @@ function applyFilters() {
         // Apply techniques in order
         for (const technique of remainingTechniques) {
             imageData = applyTechnique(imageData, technique);
+        }
+
+        // Light contrast boost at end for derm mode
+        if (dermToggle.checked) {
+            imageData = applyContrastGeneric(imageData, 1.1);
         }
 
         // Display result
@@ -218,25 +226,93 @@ function applyAStarChannel(imageData) {
     const height = imageData.height;
     const pixelCount = width * height;
     const values = new Float32Array(pixelCount);
+    const Lvals = new Float32Array(pixelCount);
 
-    // Pass 1: compute Lmax from the image
+    // Pass 1: compute L or CLAHE L, and Lmax (global or local)
     let Lmax = -Infinity;
     for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
-        const { L } = rgbToLab(data[i], data[i+1], data[i+2]);
-        values[idx] = L; // store temporarily
+        const { L, a, b } = rgbToLab(data[i], data[i+1], data[i+2]);
+        Lvals[idx] = L;
+        values[idx] = a; // store a temporarily
+    }
+
+    // Optional CLAHE on L*
+    if (dermToggle.checked) {
+        claheL(Lvals, width, height);
+    }
+
+    // Local or global Lmax
+    if (dermToggle.checked) {
+        // local max in 32x32 tiles
+        const tile = 32;
+        const LmaxMap = new Float32Array(pixelCount);
+        for (let ty = 0; ty < height; ty += tile) {
+            for (let tx = 0; tx < width; tx += tile) {
+                let localMax = -Infinity;
+                for (let y = ty; y < Math.min(ty + tile, height); y++) {
+                    for (let x = tx; x < Math.min(tx + tile, width); x++) {
+                        const idx = y * width + x;
+                        if (currentHairMask && currentHairMask[idx]) continue;
+                        const L = Lvals[idx];
+                        if (L > localMax) localMax = L;
+                    }
+                }
+                if (!isFinite(localMax)) localMax = 100;
+                for (let y = ty; y < Math.min(ty + tile, height); y++) {
+                    for (let x = tx; x < Math.min(tx + tile, width); x++) {
+                        LmaxMap[y * width + x] = localMax;
+                    }
+                }
+            }
+        }
+        // Use per-pixel LmaxMap
+        // Pass 2: compute erythema map values and min/max
+        let min = Infinity;
+        let max = -Infinity;
+        for (let idx = 0; idx < pixelCount; idx++) {
+            const aVal = values[idx];
+            const e = labErythemaValue(Lvals[idx], aVal, LmaxMap[idx]);
+            values[idx] = e;
+            if (!currentHairMask || !currentHairMask[idx]) {
+                if (e < min) min = e;
+                if (e > max) max = e;
+            }
+        }
+        const range = Math.max(1e-6, max - min);
+        const newData = new ImageData(width, height);
+        for (let idx = 0, j = 0; idx < pixelCount; idx++, j += 4) {
+            if (currentHairMask && currentHairMask[idx]) {
+                newData.data[j] = 0;
+                newData.data[j + 1] = 0;
+                newData.data[j + 2] = 0;
+                newData.data[j + 3] = 255;
+                continue;
+            }
+            const t = (values[idx] - min) / range;
+            const g = Math.round(t * 255);
+            newData.data[j] = g;
+            newData.data[j + 1] = g;
+            newData.data[j + 2] = g;
+            newData.data[j + 3] = 255;
+        }
+        lastLabErythemaImageData = newData;
+        return newData;
+    }
+
+    // Global Lmax path (non-derm)
+    for (let idx = 0; idx < pixelCount; idx++) {
         if (!currentHairMask || !currentHairMask[idx]) {
+            const L = Lvals[idx];
             if (L > Lmax) Lmax = L;
         }
     }
     if (!Number.isFinite(Lmax)) Lmax = 100; // fallback
 
-    // Pass 2: compute erythema map values and min/max
     let min = Infinity;
     let max = -Infinity;
-    for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
-        const { a } = rgbToLab(data[i], data[i+1], data[i+2]);
-        const L = values[idx];
-        const e = labErythemaValue(L, a, Lmax);
+    for (let idx = 0; idx < pixelCount; idx++) {
+        const a = values[idx];
+        const e = labErythemaValue(Lvals[idx], a, Lmax);
         values[idx] = e;
         if (!currentHairMask || !currentHairMask[idx]) {
             if (e < min) min = e;
@@ -341,9 +417,15 @@ function applyRGBRatio(imageData) {
     const { mapGR, mapRG, mapBGR } = computeSpectralInspiredMaps(imageData);
 
     // Normalize maps
-    const normGR = normalizeToUint8(mapGR).data;       // high = more green, invert later
-    const normRG = normalizeToUint8(mapRG).data;       // high = more red
-    const normBGR = normalizeToUint8(mapBGR).data;     // high = neutral, invert later
+    let normGR = normalizeToUint8(mapGR).data;       // high = more green, invert later
+    let normRG = normalizeToUint8(mapRG).data;       // high = more red
+    let normBGR = normalizeToUint8(mapBGR).data;     // high = neutral, invert later
+
+    if (dermToggle.checked) {
+        normGR = bilateralUint8(normGR, width, height);
+        normRG = bilateralUint8(normRG, width, height);
+        normBGR = bilateralUint8(normBGR, width, height);
+    }
 
     // Invert where redness should be bright
     const eryFromGR = invertUint8Map(normGR);          // red zones bright
@@ -397,6 +479,17 @@ function applyContrastBoost(imageData) {
         newData.data[i+3] = 255;
     }
     
+    return newData;
+}
+
+function applyContrastGeneric(imageData, factor) {
+    const newData = new ImageData(imageData.width, imageData.height);
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        newData.data[i] = Math.min(255, Math.max(0, factor * (imageData.data[i] - 128) + 128));
+        newData.data[i + 1] = Math.min(255, Math.max(0, factor * (imageData.data[i + 1] - 128) + 128));
+        newData.data[i + 2] = Math.min(255, Math.max(0, factor * (imageData.data[i + 2] - 128) + 128));
+        newData.data[i + 3] = 255;
+    }
     return newData;
 }
 
@@ -520,7 +613,9 @@ function applySliderMask() {
 }
 
 function redrawProcessed() {
-    if (labToggle.checked && lastLabErythemaImageData) {
+    if (dermToggle.checked && lastFusedHeatmapImageData) {
+        processedCtx.putImageData(lastFusedHeatmapImageData, 0, 0);
+    } else if (labToggle.checked && lastLabErythemaImageData) {
         processedCtx.putImageData(lastLabErythemaImageData, 0, 0);
     } else if (lastProcessedImageData) {
         processedCtx.putImageData(lastProcessedImageData, 0, 0);
@@ -608,6 +703,7 @@ function generatePreviewMaps(baseImageData) {
         fused.data[i + 3] = 255;
     }
     heatmapPreviewCtx.putImageData(fused, 0, 0);
+    lastFusedHeatmapImageData = fused;
 }
 
 // Drag handling
@@ -843,6 +939,66 @@ function erodeMask(src, w, h) {
     return out;
 }
 
+// Simple bilateral smoothing for uint8 map
+function bilateralUint8(map, w, h, sigmaSpatial = 1, sigmaRange = 12) {
+    const out = new Uint8ClampedArray(map.length);
+    const ss = 2 * sigmaSpatial * sigmaSpatial;
+    const sr = 2 * sigmaRange * sigmaRange;
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            let num = 0;
+            let den = 0;
+            const center = map[y * w + x];
+            for (let dy = -1; dy <= 1; dy++) {
+                const yy = y + dy;
+                if (yy < 0 || yy >= h) continue;
+                for (let dx = -1; dx <= 1; dx++) {
+                    const xx = x + dx;
+                    if (xx < 0 || xx >= w) continue;
+                    const v = map[yy * w + xx];
+                    const dsq = dx * dx + dy * dy;
+                    const dr = v - center;
+                    const wgt = Math.exp(-dsq / ss - (dr * dr) / sr);
+                    num += wgt * v;
+                    den += wgt;
+                }
+            }
+            out[y * w + x] = den > 0 ? Math.round(num / den) : center;
+        }
+    }
+    return out;
+}
+
+// Global CLAHE-like adjustment on L* (0-100 range stored as float)
+function claheL(Lvals, w, h, clipLimit = 2.0) {
+    const hist = new Uint32Array(256);
+    const scale = 255 / 100;
+    for (let i = 0; i < Lvals.length; i++) {
+        const v = Math.max(0, Math.min(255, Math.round(Lvals[i] * scale)));
+        hist[v]++;
+    }
+    const maxCount = (clipLimit * (w * h)) / hist.length;
+    let clipped = 0;
+    for (let i = 0; i < hist.length; i++) {
+        if (hist[i] > maxCount) {
+            clipped += hist[i] - maxCount;
+            hist[i] = maxCount;
+        }
+    }
+    const redistribute = clipped / hist.length;
+    let cdf = 0;
+    const lut = new Float32Array(256);
+    for (let i = 0; i < hist.length; i++) {
+        hist[i] += redistribute;
+        cdf += hist[i];
+        lut[i] = (cdf / (w * h)) * 100; // back to L* range
+    }
+    for (let i = 0; i < Lvals.length; i++) {
+        const v = Math.max(0, Math.min(255, Math.round(Lvals[i] * scale)));
+        Lvals[i] = lut[v];
+    }
+}
+
 // Wire up nav buttons and close icons after module load
 document.querySelectorAll('.nav-link[data-modal]').forEach(btn => {
     btn.addEventListener('click', () => showModal(btn.dataset.modal));
@@ -854,6 +1010,12 @@ document.querySelectorAll('.close[data-close]').forEach(icon => {
 
 labToggle.addEventListener('change', () => {
     // Make sure the processed layer is actually visible when toggling
+    setSliderRatio(0.5);
+    applySliderMask();
+    redrawProcessed();
+});
+
+dermToggle.addEventListener('change', () => {
     setSliderRatio(0.5);
     applySliderMask();
     redrawProcessed();
