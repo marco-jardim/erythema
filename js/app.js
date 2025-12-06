@@ -14,6 +14,10 @@ const overlapWrapper = document.getElementById('overlapWrapper');
 const compareSlider = document.getElementById('compareSlider');
 const labToggle = document.getElementById('labToggle');
 const hairToggle = document.getElementById('hairToggle');
+const labPreviewCanvas = document.getElementById('labPreviewCanvas');
+const heatmapPreviewCanvas = document.getElementById('heatmapPreviewCanvas');
+const labPreviewCtx = labPreviewCanvas.getContext('2d');
+const heatmapPreviewCtx = heatmapPreviewCanvas.getContext('2d');
 
 // ITA thresholds for skin type classification (in degrees)
 const ITA_DARK_THRESHOLD = 10;      // Below this: dark to very dark skin
@@ -31,6 +35,7 @@ let sliderRatio = 1; // 1 = show only original (slider at right), 0 = only proce
 let lastProcessedImageData = null;
 let lastLabErythemaImageData = null;
 let currentHairMask = null;
+let lastEIHbImageData = null;
 
 // File upload handler
 document.getElementById('imageUpload').addEventListener('change', function(e) {
@@ -150,6 +155,7 @@ function applyFilters() {
         let imageData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
         lastLabErythemaImageData = null;
         currentHairMask = null;
+        lastEIHbImageData = null;
 
         // Early filters executed up front regardless of later order
         const remainingTechniques = [...selectedTechniques];
@@ -167,7 +173,9 @@ function applyFilters() {
             imageData = applyMelaninFilter(imageData);
             remainingTechniques.splice(melIdx, 1);
         }
-        
+
+        const mapBase = imageData;
+
         // Apply techniques in order
         for (const technique of remainingTechniques) {
             imageData = applyTechnique(imageData, technique);
@@ -177,6 +185,7 @@ function applyFilters() {
         lastProcessedImageData = imageData;
         redrawProcessed();
         updateLabToggleState();
+        generatePreviewMaps(mapBase);
         document.getElementById('loading').classList.remove('active');
         animateSliderToCenter();
     }, 100);
@@ -399,6 +408,50 @@ function downloadProcessed() {
     link.click();
 }
 
+function downloadLabMap() {
+    if (!lastLabErythemaImageData) {
+        alert('Lab map not available yet. Run a filter that computes it (e.g., a* Channel) first.');
+        return;
+    }
+    // Draw to a temp canvas to export current lab map
+    const tmp = document.createElement('canvas');
+    tmp.width = lastLabErythemaImageData.width;
+    tmp.height = lastLabErythemaImageData.height;
+    tmp.getContext('2d').putImageData(lastLabErythemaImageData, 0, 0);
+    const link = document.createElement('a');
+    link.download = 'erythema-lab-map.png';
+    link.href = tmp.toDataURL();
+    link.click();
+}
+
+function downloadConfidenceMask() {
+    if (!originalCanvas.width || !originalCanvas.height) {
+        alert('Please upload and process an image first.');
+        return;
+    }
+    const w = originalCanvas.width;
+    const h = originalCanvas.height;
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = w;
+    maskCanvas.height = h;
+    const ctx = maskCanvas.getContext('2d');
+    const imgData = ctx.createImageData(w, h);
+    // White = confident, Black = masked hair
+    for (let i = 0, idx = 0; idx < w * h; idx++, i += 4) {
+        const isHair = currentHairMask ? currentHairMask[idx] : 0;
+        const val = isHair ? 0 : 255;
+        imgData.data[i] = val;
+        imgData.data[i + 1] = val;
+        imgData.data[i + 2] = val;
+        imgData.data[i + 3] = 255;
+    }
+    ctx.putImageData(imgData, 0, 0);
+    const link = document.createElement('a');
+    link.download = 'confidence-mask.png';
+    link.href = maskCanvas.toDataURL();
+    link.click();
+}
+
 // Helper function to convert technique name to modal ID
 function getModalId(techniqueName) {
     return 'modal' + techniqueName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
@@ -480,6 +533,81 @@ function updateLabToggleState() {
     const available = !!lastLabErythemaImageData;
     labToggle.disabled = !available;
     if (!available) labToggle.checked = false;
+}
+
+function colorizeHeat(value) {
+    // value 0..255 -> simple blue->cyan->yellow->red
+    const t = value / 255;
+    const r = Math.round(255 * Math.min(1, Math.max(0, 1.5 * t)));
+    const g = Math.round(255 * Math.min(1, Math.max(0, 1.5 * Math.min(t, 1 - t))));
+    const b = Math.round(255 * Math.min(1, Math.max(0, 1.5 * (1 - t))));
+    return { r, g, b };
+}
+
+function computeEIHbMap(imageData) {
+    const { data, width, height } = imageData;
+    const len = width * height;
+    const vals = new Float32Array(len);
+    const eps = 1e-6;
+    let min = Infinity, max = -Infinity;
+    for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
+        const r = srgbToLinear(data[i]);
+        const g = srgbToLinear(data[i + 1]);
+        const b = srgbToLinear(data[i + 2]);
+        const v = Math.log10((r + eps) / (g + 0.5 * b + eps));
+        vals[idx] = v;
+        if (!currentHairMask || !currentHairMask[idx]) {
+            if (v < min) min = v;
+            if (v > max) max = v;
+        }
+    }
+    if (!isFinite(min) || !isFinite(max) || max === min) {
+        min = 0; max = 1;
+    }
+    const range = max - min;
+    const gray = new Uint8ClampedArray(len);
+    for (let idx = 0; idx < len; idx++) {
+        if (currentHairMask && currentHairMask[idx]) {
+            gray[idx] = 0;
+            continue;
+        }
+        const t = (vals[idx] - min) / range;
+        gray[idx] = Math.round(255 * t);
+    }
+    return gray;
+}
+
+function generatePreviewMaps(baseImageData) {
+    if (!baseImageData) return;
+    // Ensure canvases sized
+    labPreviewCanvas.width = baseImageData.width;
+    labPreviewCanvas.height = baseImageData.height;
+    heatmapPreviewCanvas.width = baseImageData.width;
+    heatmapPreviewCanvas.height = baseImageData.height;
+
+    // Lab map: reuse existing computation or compute here
+    if (!lastLabErythemaImageData) {
+        lastLabErythemaImageData = applyAStarChannel(baseImageData);
+    }
+    labPreviewCtx.putImageData(lastLabErythemaImageData, 0, 0);
+
+    // EI_hb grayscale
+    const eiGray = computeEIHbMap(baseImageData);
+    lastEIHbImageData = eiGray;
+
+    // Fuse: 0.6*LabGray + 0.4*EIGray, then colorize
+    const labData = lastLabErythemaImageData.data;
+    const fused = heatmapPreviewCtx.createImageData(baseImageData.width, baseImageData.height);
+    for (let i = 0, idx = 0; idx < eiGray.length; idx++, i += 4) {
+        const labVal = labData[i]; // grayscale stored equally across channels
+        const fusedVal = Math.round(0.6 * labVal + 0.4 * eiGray[idx]);
+        const { r, g, b } = colorizeHeat(fusedVal);
+        fused.data[i] = r;
+        fused.data[i + 1] = g;
+        fused.data[i + 2] = b;
+        fused.data[i + 3] = 255;
+    }
+    heatmapPreviewCtx.putImageData(fused, 0, 0);
 }
 
 // Drag handling
@@ -736,5 +864,7 @@ window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;
 window.clearSelection = clearSelection;
 window.downloadProcessed = downloadProcessed;
+window.downloadLabMap = downloadLabMap;
+window.downloadConfidenceMask = downloadConfidenceMask;
 window.showModal = showModal;
 window.closeModal = closeModal;

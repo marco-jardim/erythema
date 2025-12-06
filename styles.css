@@ -387,6 +387,13 @@ canvas {
     display: block;
 }
 
+.dual-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .technique-grid {

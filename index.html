@@ -121,6 +121,26 @@
                             <span>Show erythema lab map (a*)</span>
                         </label>
                         <button class="download-btn" onclick="downloadProcessed()">💾 Download Result</button>
+                        <button class="download-btn" onclick="downloadLabMap()">⬇️ Lab Map</button>
+                        <button class="download-btn" onclick="downloadConfidenceMask()">⬇️ Confidence Mask</button>
+                    </div>
+                </div>
+
+                <div class="canvas-container">
+                    <h3>Dual View: Lab Map & EI<sub>hb</sub> Heatmap</h3>
+                    <div class="dual-grid">
+                        <div>
+                            <h4 style="margin-bottom:8px;">Lab Map (L<sub>max</sub>–L)×a*</h4>
+                            <div class="canvas-wrapper">
+                                <canvas id="labPreviewCanvas"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom:8px;">Fused EI<sub>hb</sub> Heatmap</h4>
+                            <div class="canvas-wrapper">
+                                <canvas id="heatmapPreviewCanvas"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
