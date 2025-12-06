@@ -86,12 +86,21 @@ function loadImageFromDataUrl(dataUrl, name = 'image') {
 // Desktop camera handling
 async function startCamera() {
     try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 4096 },
+                height: { ideal: 3072 }
+            }
+        });
         cameraPreview.srcObject = cameraStream;
         cameraWrapper.style.display = 'block';
         cameraStartBtn.disabled = true;
         cameraSnapBtn.disabled = false;
         cameraStopBtn.disabled = false;
+        requestAnimationFrame(() => {
+            cameraWrapper.style.opacity = '1';
+        });
     } catch (err) {
         alert('Unable to access camera: ' + err.message);
     }
@@ -104,6 +113,7 @@ function stopCamera() {
     }
     cameraPreview.srcObject = null;
     cameraWrapper.style.display = 'none';
+    cameraWrapper.style.opacity = '0';
     cameraStartBtn.disabled = false;
     cameraSnapBtn.disabled = true;
     cameraStopBtn.disabled = true;
@@ -119,6 +129,7 @@ function snapCamera() {
     ctx.drawImage(video, 0, 0);
     const dataUrl = canvas.toDataURL('image/png');
     loadImageFromDataUrl(dataUrl, 'captured.png');
+    stopCamera();
 }
 
 function collectSelectedTechniques() {
@@ -162,7 +173,8 @@ function displayOriginalImage() {
     processedCanvas.width = width;
     processedCanvas.height = height;
 
-    overlapWrapper.style.width = `${width}px`;
+    overlapWrapper.style.width = `100%`;
+    overlapWrapper.style.maxWidth = `${width}px`;
     overlapWrapper.style.height = `${height}px`;
 
     originalCtx.drawImage(originalImage, 0, 0, width, height);
@@ -170,6 +182,9 @@ function displayOriginalImage() {
     // Initially hide processed layer until filters run
     processedCtx.clearRect(0, 0, width, height);
     applySliderMask();
+    requestAnimationFrame(() => {
+        overlapWrapper.style.opacity = '1';
+    });
 
     lastProcessedImageData = null;
     lastLabErythemaImageData = null;
