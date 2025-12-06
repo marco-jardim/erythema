@@ -397,9 +397,10 @@ canvas {
     right: 0;
     width: 4px;
     height: 100%;
-    background: #ffcc00;
+    background: linear-gradient(180deg, #ffd54f 0%, #ffb300 100%);
     cursor: ew-resize;
-    box-shadow: 0 0 8px rgba(0,0,0,0.25);
+    box-shadow: 0 0 10px rgba(0,0,0,0.25);
+    transition: transform 0.1s ease;
 }
 
 .slider-handle::before {
@@ -407,12 +408,13 @@ canvas {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     background: #ffcc00;
     border: 2px solid #b58900;
     border-radius: 50%;
     transform: translate(-50%, -50%);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
 }
 
 .info-box {
@@ -506,11 +508,27 @@ canvas {
 
     .desktop-only { display: none !important; }
     .mobile-only { display: inline-block !important; }
+    /* Mobile slider: larger grab area */
+    .slider-handle {
+        width: 8px;
+    }
+    .slider-handle::before {
+        width: 20px;
+        height: 20px;
+    }
 }
 
 @media (min-width: 769px) {
     .desktop-only { display: inline-flex !important; }
     .mobile-only { display: none !important; }
+    /* Desktop slider: thinner bar, tighter knob */
+    .slider-handle {
+        width: 4px;
+    }
+    .slider-handle::before {
+        width: 16px;
+        height: 16px;
+    }
 }
 
 .camera-preview video {
