@@ -362,6 +362,7 @@
                 <button class="nav-link" onclick="showModal('ita')">ITA° Index</button>
                 <button class="nav-link" onclick="showModal('rgb-ratio')">RGB Ratio</button>
                 <button class="nav-link" onclick="showModal('melanin')">Melanin Filter</button>
+                <button class="nav-link" onclick="showModal('contrast-boost')">Contrast Enhancement</button>
             </div>
         </nav>
 
@@ -585,6 +586,37 @@
 
             <h3>Note</h3>
             <p>While this technique can enhance visualization, it should be used in conjunction with clinical assessment. It's particularly useful when combined with other techniques in a multi-step pipeline.</p>
+        </div>
+    </div>
+
+    <div id="modalContrastBoost" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('contrast-boost')">&times;</span>
+            <h2>Contrast Enhancement</h2>
+            
+            <h3>What is it?</h3>
+            <p>Contrast enhancement is a fundamental image processing technique that increases the difference between light and dark regions, making features more visually distinct.</p>
+
+            <h3>How it works</h3>
+            <p>This technique applies a linear contrast stretch to each color channel:</p>
+            <ul>
+                <li>Pixels darker than middle gray become darker</li>
+                <li>Pixels lighter than middle gray become lighter</li>
+                <li>The overall dynamic range is expanded</li>
+                <li>Subtle variations become more apparent</li>
+            </ul>
+
+            <h3>Application to Erythema Detection</h3>
+            <p>When used in combination with other filters, contrast enhancement can:</p>
+            <ul>
+                <li>Amplify subtle color differences introduced by previous filters</li>
+                <li>Make erythema markers more visually prominent</li>
+                <li>Improve the interpretability of processed images</li>
+                <li>Help distinguish between different levels of inflammation</li>
+            </ul>
+
+            <h3>Best Practices</h3>
+            <p>Contrast enhancement is most effective when applied as the final step in a processing pipeline, after color-space transformations and spectral filtering have isolated the erythema signature.</p>
         </div>
     </div>
 
@@ -862,8 +894,8 @@
             for (let i = 0; i < data.length; i += 4) {
                 const lab = rgbToLab(data[i], data[i+1], data[i+2]);
                 
-                // Calculate ITA
-                const ita = Math.atan((lab.L - 50) / lab.b) * (180 / Math.PI);
+                // Calculate ITA with division by zero protection
+                const ita = lab.b !== 0 ? Math.atan((lab.L - 50) / lab.b) * (180 / Math.PI) : 0;
                 
                 // Adjust erythema detection based on ITA
                 // Lower ITA (darker skin) gets more enhancement
