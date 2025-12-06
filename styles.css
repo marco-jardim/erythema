@@ -329,6 +329,10 @@ input[type="file"] {
     border-radius: 10px;
     padding: 20px;
     text-align: center;
+
+    @media (max-width: 768px) {
+        padding: 20px 0;
+    }
 }
 
 .canvas-container h3 {
@@ -522,6 +526,9 @@ canvas {
 
 /* Responsive */
 @media (max-width: 768px) {
+    body {
+        padding: 1px;
+    }
     .technique-grid {
         grid-template-columns: 1fr;
     }

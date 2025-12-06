@@ -1254,10 +1254,19 @@ document.getElementById('helpFab').addEventListener('click', () => showModal('he
 // Quick-start first-load behavior
 const HELP_STORAGE_KEY = 'erythema_help_dismissed';
 function shouldShowHelp() {
-    return localStorage.getItem(HELP_STORAGE_KEY) !== 'true';
+    try {
+        return localStorage.getItem(HELP_STORAGE_KEY) !== 'true';
+    } catch {
+        // If storage is blocked (some mobile/private modes), show help.
+        return true;
+    }
 }
 function dismissHelp(permanent) {
-    if (permanent) localStorage.setItem(HELP_STORAGE_KEY, 'true');
+    try {
+        if (permanent) localStorage.setItem(HELP_STORAGE_KEY, 'true');
+    } catch {
+        /* ignore storage errors */
+    }
     closeModal('help');
 }
 
@@ -1265,17 +1274,23 @@ const helpDontShow = document.getElementById('helpDontShow');
 const helpCloseBtn = document.getElementById('helpCloseBtn');
 helpCloseBtn.addEventListener('click', () => dismissHelp(helpDontShow.checked));
 helpDontShow.addEventListener('change', () => {
-    if (helpDontShow.checked) {
-        localStorage.setItem(HELP_STORAGE_KEY, 'true');
-    } else {
-        localStorage.removeItem(HELP_STORAGE_KEY);
+    try {
+        if (helpDontShow.checked) {
+            localStorage.setItem(HELP_STORAGE_KEY, 'true');
+        } else {
+            localStorage.removeItem(HELP_STORAGE_KEY);
+        }
+    } catch {
+        /* ignore storage errors */
     }
 });
 
 window.addEventListener('load', () => {
-    if (shouldShowHelp()) {
-        showModal('help');
-    }
+    setTimeout(() => {
+        if (shouldShowHelp()) {
+            showModal('help');
+        }
+    }, 300);
 });
 
 // Expose functions for inline handlers
