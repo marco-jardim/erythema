@@ -59,17 +59,10 @@ document.getElementById('techniqueGrid').addEventListener('click', function(e) {
 
 // Display original image
 function displayOriginalImage() {
-    const maxWidth = 500;
-    const maxHeight = 500;
-    let width = originalImage.width;
-    let height = originalImage.height;
+    const width = originalImage.naturalWidth || originalImage.width;
+    const height = originalImage.naturalHeight || originalImage.height;
 
-    if (width > maxWidth || height > maxHeight) {
-        const ratio = Math.min(maxWidth / width, maxHeight / height);
-        width *= ratio;
-        height *= ratio;
-    }
-
+    // Keep canvas pixel resolution identical to the source image
     originalCanvas.width = width;
     originalCanvas.height = height;
     processedCanvas.width = width;
