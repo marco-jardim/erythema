@@ -652,6 +652,9 @@ function getModalId(techniqueName) {
 function showModal(type) {
     const modal = document.getElementById(getModalId(type));
     if (modal) {
+        if (type === 'help') {
+            helpDontShow.checked = localStorage.getItem(HELP_STORAGE_KEY) === 'true';
+        }
         modal.style.display = 'block';
     }
 }
@@ -1244,6 +1247,36 @@ dermBtn.addEventListener('click', () => {
 cameraStartBtn.addEventListener('click', startCamera);
 cameraStopBtn.addEventListener('click', stopCamera);
 cameraSnapBtn.addEventListener('click', snapCamera);
+
+// Help floating button
+document.getElementById('helpFab').addEventListener('click', () => showModal('help'));
+
+// Quick-start first-load behavior
+const HELP_STORAGE_KEY = 'erythema_help_dismissed';
+function shouldShowHelp() {
+    return localStorage.getItem(HELP_STORAGE_KEY) !== 'true';
+}
+function dismissHelp(permanent) {
+    if (permanent) localStorage.setItem(HELP_STORAGE_KEY, 'true');
+    closeModal('help');
+}
+
+const helpDontShow = document.getElementById('helpDontShow');
+const helpCloseBtn = document.getElementById('helpCloseBtn');
+helpCloseBtn.addEventListener('click', () => dismissHelp(helpDontShow.checked));
+helpDontShow.addEventListener('change', () => {
+    if (helpDontShow.checked) {
+        localStorage.setItem(HELP_STORAGE_KEY, 'true');
+    } else {
+        localStorage.removeItem(HELP_STORAGE_KEY);
+    }
+});
+
+window.addEventListener('load', () => {
+    if (shouldShowHelp()) {
+        showModal('help');
+    }
+});
 
 // Expose functions for inline handlers
 window.applyFilters = applyFilters;

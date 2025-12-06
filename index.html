@@ -168,6 +168,8 @@
         </div>
     </div>
 
+    <button id="helpFab" class="help-fab" aria-label="Help and quick tour">❔</button>
+
     <!-- Modals for technique explanations -->
     <div id="modalErythema" class="modal">
         <div class="modal-content">
@@ -359,6 +361,29 @@
 
             <h3>When to use</h3>
             <p>Enable this early filter when dense hair would skew redness calculations or hide inflammation. It runs before all other filters.</p>
+        </div>
+    </div>
+
+    <div id="modalHelp" class="modal">
+        <div class="modal-content">
+            <span class="close" data-close="help">&times;</span>
+            <h2>Quick start (for dermatology users)</h2>
+            <ul>
+                <li><strong>Image</strong>: Upload, mobile capture, or start desktop camera → capture. Full resolution is kept for processing/download.</li>
+                <li><strong>Early Filters</strong>: Hair Reduction + Melanin Compensation run before others if selected; Derm mode forces both.</li>
+                <li><strong>Main Filters</strong>: a* Lab map, EI (log10 R/G), ITA gain, Spectral Ratio (G/R, R/G, (B·G)/R).</li>
+                <li><strong>Late</strong>: Contrast Enhancement runs last. Derm mode adds CLAHE L*, local Lmax, smoothed ratios, fused heatmap.</li>
+                <li><strong>Views</strong>: Switch Lab / Fused above the slider; slider compares processed vs original.</li>
+                <li><strong>Downloads</strong>: “Result”, “Lab Map”, “Confidence Mask” export full-res PNGs.</li>
+                <li><strong>Confidence</strong>: Mask excludes hair, low-signal, highlights—ignored in normalization; good for clinical notes/ML.</li>
+            </ul>
+            <p style="margin-top:10px;">Tip: For dark scalps, enable Derm mode, view Fused, and keep the confidence mask for documentation.</p>
+            <label class="toggle-row" style="margin-top:10px;">
+                <input type="checkbox" id="helpDontShow"> Don't show this again
+            </label>
+            <div style="text-align:right; margin-top:10px;">
+                <button class="file-upload" type="button" id="helpCloseBtn">Got it</button>
+            </div>
         </div>
     </div>
 
