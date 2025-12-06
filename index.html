@@ -629,6 +629,18 @@
         const originalCtx = originalCanvas.getContext('2d');
         const processedCtx = processedCanvas.getContext('2d');
 
+        // Constants for image processing
+        const CONTRAST_ENHANCEMENT_FACTOR = 1.5;
+        
+        // ITA thresholds for skin type classification (in degrees)
+        const ITA_DARK_THRESHOLD = 10;      // Below this: dark to very dark skin
+        const ITA_TAN_THRESHOLD = 28;       // Below this: tan skin
+        
+        // Enhancement factors based on skin type
+        const DARK_SKIN_ENHANCEMENT = 1.8;   // Higher enhancement for darker skin
+        const TAN_SKIN_ENHANCEMENT = 1.4;    // Moderate enhancement for tan skin
+        const LIGHT_SKIN_ENHANCEMENT = 1.0;  // Minimal enhancement for light skin
+
         // File upload handler
         document.getElementById('imageUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -861,9 +873,10 @@
                 minEI = Math.min(minEI, ei);
             }
             
-            // Normalize and apply
+            // Normalize and apply (protect against division by zero)
+            const range = maxEI - minEI;
             for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-                const normalizedEI = (eiValues[j] - minEI) / (maxEI - minEI);
+                const normalizedEI = range > 0 ? (eiValues[j] - minEI) / range : 0;
                 const heat = normalizedEI * 255;
                 
                 // Heat map visualization
@@ -899,7 +912,8 @@
                 
                 // Adjust erythema detection based on ITA
                 // Lower ITA (darker skin) gets more enhancement
-                const enhancement = ita < 10 ? 1.8 : (ita < 28 ? 1.4 : 1.0);
+                const enhancement = ita < ITA_DARK_THRESHOLD ? DARK_SKIN_ENHANCEMENT : 
+                                  (ita < ITA_TAN_THRESHOLD ? TAN_SKIN_ENHANCEMENT : LIGHT_SKIN_ENHANCEMENT);
                 
                 newData.data[i] = Math.min(255, data[i] * enhancement);
                 newData.data[i+1] = data[i+1];
@@ -962,12 +976,11 @@
         function applyContrastBoost(imageData) {
             const data = imageData.data;
             const newData = new ImageData(imageData.width, imageData.height);
-            const factor = 1.5;
             
             for (let i = 0; i < data.length; i += 4) {
-                newData.data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
-                newData.data[i+1] = Math.min(255, Math.max(0, factor * (data[i+1] - 128) + 128));
-                newData.data[i+2] = Math.min(255, Math.max(0, factor * (data[i+2] - 128) + 128));
+                newData.data[i] = Math.min(255, Math.max(0, CONTRAST_ENHANCEMENT_FACTOR * (data[i] - 128) + 128));
+                newData.data[i+1] = Math.min(255, Math.max(0, CONTRAST_ENHANCEMENT_FACTOR * (data[i+1] - 128) + 128));
+                newData.data[i+2] = Math.min(255, Math.max(0, CONTRAST_ENHANCEMENT_FACTOR * (data[i+2] - 128) + 128));
                 newData.data[i+3] = 255;
             }
             
@@ -982,18 +995,21 @@
             link.click();
         }
 
+        // Helper function to convert technique name to modal ID
+        function getModalId(techniqueName) {
+            return 'modal' + techniqueName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+        }
+
         // Modal functions
         function showModal(type) {
-            const modalId = 'modal' + type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
-            const modal = document.getElementById(modalId);
+            const modal = document.getElementById(getModalId(type));
             if (modal) {
                 modal.style.display = 'block';
             }
         }
 
         function closeModal(type) {
-            const modalId = 'modal' + type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
-            const modal = document.getElementById(modalId);
+            const modal = document.getElementById(getModalId(type));
             if (modal) {
                 modal.style.display = 'none';
             }
