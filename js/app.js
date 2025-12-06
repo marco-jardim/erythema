@@ -347,32 +347,33 @@ function applyAStarChannel(imageData) {
     const width = imageData.width;
     const height = imageData.height;
     const pixelCount = width * height;
-    const values = new Float32Array(pixelCount);
+    const aVals = new Float32Array(pixelCount);
     const Lvals = new Float32Array(pixelCount);
 
-    // Pass 1: compute L or CLAHE L, and Lmax (global or local)
-    let Lmax = -Infinity;
+    // Pass 1: compute Lab, store L and a
     for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
-        const { L, a, b } = rgbToLab(data[i], data[i+1], data[i+2]);
+        const { L, a } = rgbToLab(data[i], data[i+1], data[i+2]);
         Lvals[idx] = L;
-        values[idx] = a; // store a temporarily
+        aVals[idx] = a;
     }
 
-    // Optional CLAHE on L*
-    if (dermToggle.checked) {
-        claheL(Lvals, width, height);
-    }
+    // CLAHE on L* (tile ~8x8, clipLimit ~2.0)
+    claheL8x8(Lvals, width, height, 2.0);
 
-    // Local or global Lmax
+    // Determine Lmax map (local if derm mode, else global)
+    let LmaxGlobal = -Infinity;
+    let LmaxMap = null;
     if (dermToggle.checked) {
-        // local max in 32x32 tiles
-        const tile = 32;
-        const LmaxMap = new Float32Array(pixelCount);
-        for (let ty = 0; ty < height; ty += tile) {
-            for (let tx = 0; tx < width; tx += tile) {
+        LmaxMap = new Float32Array(pixelCount);
+        const tilesX = 8;
+        const tilesY = 8;
+        const tileW = Math.ceil(width / tilesX);
+        const tileH = Math.ceil(height / tilesY);
+        for (let ty = 0; ty < tilesY; ty++) {
+            for (let tx = 0; tx < tilesX; tx++) {
                 let localMax = -Infinity;
-                for (let y = ty; y < Math.min(ty + tile, height); y++) {
-                    for (let x = tx; x < Math.min(tx + tile, width); x++) {
+                for (let y = ty * tileH; y < Math.min((ty + 1) * tileH, height); y++) {
+                    for (let x = tx * tileW; x < Math.min((tx + 1) * tileW, width); x++) {
                         const idx = y * width + x;
                         if (currentHairMask && currentHairMask[idx]) continue;
                         const L = Lvals[idx];
@@ -380,62 +381,33 @@ function applyAStarChannel(imageData) {
                     }
                 }
                 if (!isFinite(localMax)) localMax = 100;
-                for (let y = ty; y < Math.min(ty + tile, height); y++) {
-                    for (let x = tx; x < Math.min(tx + tile, width); x++) {
+                for (let y = ty * tileH; y < Math.min((ty + 1) * tileH, height); y++) {
+                    for (let x = tx * tileW; x < Math.min((tx + 1) * tileW, width); x++) {
                         LmaxMap[y * width + x] = localMax;
                     }
                 }
             }
         }
-        // Use per-pixel LmaxMap
-        // Pass 2: compute erythema map values and min/max
-        let min = Infinity;
-        let max = -Infinity;
+    } else {
         for (let idx = 0; idx < pixelCount; idx++) {
-            const aVal = values[idx];
-            const e = labErythemaValue(Lvals[idx], aVal, LmaxMap[idx]);
-            values[idx] = e;
             if (!currentHairMask || !currentHairMask[idx]) {
-                if (e < min) min = e;
-                if (e > max) max = e;
+                const L = Lvals[idx];
+                if (L > LmaxGlobal) LmaxGlobal = L;
             }
         }
-        const range = Math.max(1e-6, max - min);
-        const newData = new ImageData(width, height);
-        for (let idx = 0, j = 0; idx < pixelCount; idx++, j += 4) {
-            if (currentHairMask && currentHairMask[idx]) {
-                newData.data[j] = 0;
-                newData.data[j + 1] = 0;
-                newData.data[j + 2] = 0;
-                newData.data[j + 3] = 255;
-                continue;
-            }
-            const t = (values[idx] - min) / range;
-            const g = Math.round(t * 255);
-            newData.data[j] = g;
-            newData.data[j + 1] = g;
-            newData.data[j + 2] = g;
-            newData.data[j + 3] = 255;
-        }
-        lastLabErythemaImageData = newData;
-        return newData;
+        if (!isFinite(LmaxGlobal)) LmaxGlobal = 100;
     }
 
-    // Global Lmax path (non-derm)
-    for (let idx = 0; idx < pixelCount; idx++) {
-        if (!currentHairMask || !currentHairMask[idx]) {
-            const L = Lvals[idx];
-            if (L > Lmax) Lmax = L;
-        }
-    }
-    if (!Number.isFinite(Lmax)) Lmax = 100; // fallback
-
+    // Compute erythema map and min/max
     let min = Infinity;
     let max = -Infinity;
+    const eVals = new Float32Array(pixelCount);
     for (let idx = 0; idx < pixelCount; idx++) {
-        const a = values[idx];
-        const e = labErythemaValue(Lvals[idx], a, Lmax);
-        values[idx] = e;
+        const L = Lvals[idx];
+        const aVal = aVals[idx];
+        const Lmax = dermToggle.checked ? LmaxMap[idx] : LmaxGlobal;
+        const e = labErythemaValue(L, aVal, Lmax);
+        eVals[idx] = e;
         if (!currentHairMask || !currentHairMask[idx]) {
             if (e < min) min = e;
             if (e > max) max = e;
@@ -445,7 +417,6 @@ function applyAStarChannel(imageData) {
     const range = Math.max(1e-6, max - min);
     const newData = new ImageData(width, height);
 
-    // Pass 3: normalize to 0-255 grayscale
     for (let idx = 0, j = 0; idx < pixelCount; idx++, j += 4) {
         if (currentHairMask && currentHairMask[idx]) {
             newData.data[j] = 0;
@@ -454,7 +425,7 @@ function applyAStarChannel(imageData) {
             newData.data[j + 3] = 255;
             continue;
         }
-        const t = (values[idx] - min) / range;
+        const t = (eVals[idx] - min) / range;
         const g = Math.round(t * 255);
         newData.data[j] = g;
         newData.data[j + 1] = g;
@@ -1126,32 +1097,53 @@ function bilateralUint8(map, w, h, sigmaSpatial = 1, sigmaRange = 12) {
 }
 
 // Global CLAHE-like adjustment on L* (0-100 range stored as float)
-function claheL(Lvals, w, h, clipLimit = 2.0) {
-    const hist = new Uint32Array(256);
+// Tile-based CLAHE on L* (0-100), default 8x8 tiles, clipLimit ~2.0
+function claheL8x8(Lvals, w, h, clipLimit = 2.0, tilesX = 8, tilesY = 8) {
+    const histSize = 256;
     const scale = 255 / 100;
-    for (let i = 0; i < Lvals.length; i++) {
-        const v = Math.max(0, Math.min(255, Math.round(Lvals[i] * scale)));
-        hist[v]++;
-    }
-    const maxCount = (clipLimit * (w * h)) / hist.length;
-    let clipped = 0;
-    for (let i = 0; i < hist.length; i++) {
-        if (hist[i] > maxCount) {
-            clipped += hist[i] - maxCount;
-            hist[i] = maxCount;
+    const tileW = Math.ceil(w / tilesX);
+    const tileH = Math.ceil(h / tilesY);
+    // Precompute LUT per tile
+    const luts = [];
+    for (let ty = 0; ty < tilesY; ty++) {
+        for (let tx = 0; tx < tilesX; tx++) {
+            const hist = new Uint32Array(histSize);
+            // build hist for tile
+            for (let y = ty * tileH; y < Math.min((ty + 1) * tileH, h); y++) {
+                for (let x = tx * tileW; x < Math.min((tx + 1) * tileW, w); x++) {
+                    const v = Math.max(0, Math.min(255, Math.round(Lvals[y * w + x] * scale)));
+                    hist[v]++;
+                }
+            }
+            const tilePixels = (Math.min((tx + 1) * tileW, w) - tx * tileW) * (Math.min((ty + 1) * tileH, h) - ty * tileH);
+            const maxCount = (clipLimit * tilePixels) / histSize;
+            let clipped = 0;
+            for (let i = 0; i < histSize; i++) {
+                if (hist[i] > maxCount) {
+                    clipped += hist[i] - maxCount;
+                    hist[i] = maxCount;
+                }
+            }
+            const redistribute = clipped / histSize;
+            let cdf = 0;
+            const lut = new Float32Array(histSize);
+            for (let i = 0; i < histSize; i++) {
+                hist[i] += redistribute;
+                cdf += hist[i];
+                lut[i] = (cdf / tilePixels) * 100; // back to L* range
+            }
+            luts.push(lut);
         }
     }
-    const redistribute = clipped / hist.length;
-    let cdf = 0;
-    const lut = new Float32Array(256);
-    for (let i = 0; i < hist.length; i++) {
-        hist[i] += redistribute;
-        cdf += hist[i];
-        lut[i] = (cdf / (w * h)) * 100; // back to L* range
-    }
-    for (let i = 0; i < Lvals.length; i++) {
-        const v = Math.max(0, Math.min(255, Math.round(Lvals[i] * scale)));
-        Lvals[i] = lut[v];
+    // Apply LUT (nearest tile)
+    for (let y = 0; y < h; y++) {
+        const ty = Math.min(tilesY - 1, Math.floor(y / tileH));
+        for (let x = 0; x < w; x++) {
+            const tx = Math.min(tilesX - 1, Math.floor(x / tileW));
+            const lut = luts[ty * tilesX + tx];
+            const v = Math.max(0, Math.min(255, Math.round(Lvals[y * w + x] * scale)));
+            Lvals[y * w + x] = lut[v];
+        }
     }
 }
 
