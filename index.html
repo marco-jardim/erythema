@@ -32,19 +32,19 @@
                 <div class="control-group">
                     <label>Step 1: Upload or Take a Photo</label>
                     <div class="file-upload-group">
-                        <label for="imageCapture" class="file-upload">
+                        <label for="imageCapture" class="file-upload mobile-only">
                             📷 Take Photo (Camera)
                         </label>
-                        <label for="imageUpload" class="file-upload">
+                        <label for="imageUpload" class="file-upload mobile-only">
                             📁 Choose from Gallery
                         </label>
-                        <button type="button" class="file-upload" id="cameraStartBtn">🎥 Start Desktop Camera</button>
-                        <button type="button" class="file-upload" id="cameraSnapBtn" disabled>📸 Capture Frame</button>
-                        <button type="button" class="file-upload" id="cameraStopBtn" disabled>🛑 Stop Camera</button>
+                        <button type="button" class="file-upload desktop-only" id="cameraStartBtn">🎥 Start Desktop Camera</button>
+                        <button type="button" class="file-upload desktop-only" id="cameraSnapBtn" disabled>📸 Capture Frame</button>
+                        <button type="button" class="file-upload desktop-only" id="cameraStopBtn" disabled>🛑 Stop Camera</button>
                     </div>
                     <input type="file" id="imageCapture" accept="image/*" capture="environment">
                     <input type="file" id="imageUpload" accept="image/*">
-                    <div class="camera-preview" id="cameraPreviewWrapper" style="display:none;">
+                    <div class="camera-preview desktop-only" id="cameraPreviewWrapper" style="display:none;">
                         <video id="cameraPreview" autoplay playsinline></video>
                     </div>
                     <span id="fileName" style="margin-left: 15px; color: #666;"></span>

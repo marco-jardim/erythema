@@ -164,6 +164,9 @@ input[type="file"] {
     align-items: center;
 }
 
+.desktop-only { display: none; }
+.mobile-only { display: inline-block; }
+
 .camera-preview {
     margin-top: 10px;
     background: #000;
@@ -475,4 +478,12 @@ canvas {
     nav h1 {
         font-size: 22px;
     }
+
+    .desktop-only { display: none !important; }
+    .mobile-only { display: inline-block !important; }
+}
+
+@media (min-width: 769px) {
+    .desktop-only { display: inline-block !important; }
+    .mobile-only { display: none !important; }
 }
