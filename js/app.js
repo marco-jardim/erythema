@@ -663,12 +663,27 @@ function updateViewButtons() {
 }
 
 function colorizeHeat(value) {
-    // value 0..255 -> simple blue->cyan->yellow->red
-    const t = value / 255;
-    const r = Math.round(255 * Math.min(1, Math.max(0, 1.5 * t)));
-    const g = Math.round(255 * Math.min(1, Math.max(0, 1.5 * Math.min(t, 1 - t))));
-    const b = Math.round(255 * Math.min(1, Math.max(0, 1.5 * (1 - t))));
-    return { r, g, b };
+    // Perceptually friendly for dark backgrounds: black -> deep purple -> orange -> yellow
+    const t = Math.min(1, Math.max(0, value / 255));
+    let r, g, b;
+    if (t < 0.5) {
+        // 0..0.5 : black -> purple -> magenta
+        const k = t / 0.5; // 0..1
+        r = 64 + k * 96;   // 64 -> 160
+        g = 0 + k * 32;    // 0 -> 32
+        b = 64 + k * 191;  // 64 -> 255
+    } else {
+        // 0.5..1 : magenta -> orange -> yellow
+        const k = (t - 0.5) / 0.5; // 0..1
+        r = 160 + k * 95;  // 160 -> 255
+        g = 32 + k * 223;  // 32 -> 255
+        b = 255 - k * 255; // 255 -> 0
+    }
+    return {
+        r: Math.round(Math.min(255, Math.max(0, r))),
+        g: Math.round(Math.min(255, Math.max(0, g))),
+        b: Math.round(Math.min(255, Math.max(0, b)))
+    };
 }
 
 function computeEIHbMap(imageData) {
