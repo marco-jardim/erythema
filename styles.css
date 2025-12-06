@@ -155,6 +155,12 @@ nav p {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+/* Step 1 desktop buttons (not wrapped in label) should match label styling */
+.control-group .file-upload-group > button.file-upload {
+    font-weight: 600;
+    color: white !important;
+}
+
 .file-upload:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 14px rgba(0,0,0,0.2);
