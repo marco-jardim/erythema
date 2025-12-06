@@ -41,6 +41,7 @@ let currentHairMask = null;
 let lastEIHbImageData = null;
 let lastFusedHeatmapImageData = null;
 let resultViewMode = 'processed';
+let hairApplied = false;
 
 // File upload handler
 document.getElementById('imageUpload').addEventListener('change', function(e) {
@@ -178,6 +179,7 @@ function applyFilters() {
         currentHairMask = null;
         lastEIHbImageData = null;
         lastFusedHeatmapImageData = null;
+        hairApplied = false;
 
         // Early filters executed up front regardless of later order
         const remainingTechniques = [...selectedTechniques];
@@ -188,6 +190,7 @@ function applyFilters() {
             imageData = cleaned.cleanedImage;
             currentHairMask = cleaned.mask;
             if (hairIdx < remainingTechniques.length) remainingTechniques.splice(hairIdx, 1);
+            hairApplied = true;
         }
 
         const melIdx = remainingTechniques.indexOf('melanin-filter');
@@ -550,7 +553,7 @@ function downloadConfidenceMask() {
     const imgData = ctx.createImageData(w, h);
     // White = confident, Black = masked hair
     for (let i = 0, idx = 0; idx < w * h; idx++, i += 4) {
-        const isHair = currentHairMask ? currentHairMask[idx] : 0;
+        const isHair = (currentHairMask && currentHairMask[idx]) ? 1 : 0;
         const val = isHair ? 0 : 255;
         imgData.data[i] = val;
         imgData.data[i + 1] = val;
@@ -710,9 +713,7 @@ function generatePreviewMaps(baseImageData) {
     heatmapPreviewCanvas.height = baseImageData.height;
 
     // Lab map: reuse existing computation or compute here
-    if (!lastLabErythemaImageData) {
-        lastLabErythemaImageData = applyAStarChannel(baseImageData);
-    }
+    lastLabErythemaImageData = applyAStarChannel(baseImageData);
     labPreviewCtx.putImageData(lastLabErythemaImageData, 0, 0);
 
     // EI_hb grayscale
