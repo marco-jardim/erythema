@@ -12,6 +12,7 @@ const processedCtx = processedCanvas.getContext('2d');
 const overlapWrapper = document.getElementById('overlapWrapper');
 const compareSlider = document.getElementById('compareSlider');
 const labToggle = document.getElementById('labToggle');
+const hairToggle = document.getElementById('hairToggle');
 
 // ITA thresholds for skin type classification (in degrees)
 const ITA_DARK_THRESHOLD = 10;      // Below this: dark to very dark skin
@@ -28,6 +29,7 @@ let sliderRatio = 1; // 1 = show only original (slider at right), 0 = only proce
 // Cached outputs
 let lastProcessedImageData = null;
 let lastLabErythemaImageData = null;
+let currentHairMask = null;
 
 // File upload handler
 document.getElementById('imageUpload').addEventListener('change', function(e) {
@@ -141,6 +143,14 @@ function applyFilters() {
         // Start with original image data
         let imageData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
         lastLabErythemaImageData = null;
+        currentHairMask = null;
+
+        // Optional hair reduction
+        if (hairToggle.checked) {
+            const cleaned = reduceHairPerturbation(imageData);
+            imageData = cleaned.cleanedImage;
+            currentHairMask = cleaned.mask;
+        }
         
         // Apply techniques in order
         for (const technique of selectedTechniques) {
@@ -189,7 +199,9 @@ function applyAStarChannel(imageData) {
     for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
         const { L } = rgbToLab(data[i], data[i+1], data[i+2]);
         values[idx] = L; // store temporarily
-        if (L > Lmax) Lmax = L;
+        if (!currentHairMask || !currentHairMask[idx]) {
+            if (L > Lmax) Lmax = L;
+        }
     }
     if (!Number.isFinite(Lmax)) Lmax = 100; // fallback
 
@@ -201,8 +213,10 @@ function applyAStarChannel(imageData) {
         const L = values[idx];
         const e = labErythemaValue(L, a, Lmax);
         values[idx] = e;
-        if (e < min) min = e;
-        if (e > max) max = e;
+        if (!currentHairMask || !currentHairMask[idx]) {
+            if (e < min) min = e;
+            if (e > max) max = e;
+        }
     }
 
     const range = Math.max(1e-6, max - min);
@@ -210,6 +224,13 @@ function applyAStarChannel(imageData) {
 
     // Pass 3: normalize to 0-255 grayscale
     for (let idx = 0, j = 0; idx < pixelCount; idx++, j += 4) {
+        if (currentHairMask && currentHairMask[idx]) {
+            newData.data[j] = 0;
+            newData.data[j + 1] = 0;
+            newData.data[j + 2] = 0;
+            newData.data[j + 3] = 255;
+            continue;
+        }
         const t = (values[idx] - min) / range;
         const g = Math.round(t * 255);
         newData.data[j] = g;
@@ -465,6 +486,184 @@ window.addEventListener('pointerup', (e) => {
     dragging = false;
     compareSlider.releasePointerCapture(e.pointerId);
 });
+
+// Hair reduction pipeline: detect mask, simple inpaint, return cleaned image
+function reduceHairPerturbation(imageData) {
+    const { data, width, height } = imageData;
+    const pixelCount = width * height;
+
+    // Grayscale (luma)
+    const gray = new Float32Array(pixelCount);
+    for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
+        gray[idx] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    }
+
+    // Black-hat approximation: closing (dilate then erode) then subtract
+    const dilated = dilateGray(gray, width, height);
+    const closed = erodeGray(dilated, width, height);
+    const blackhat = new Float32Array(pixelCount);
+    let sum = 0;
+    let sumSq = 0;
+    for (let i = 0; i < pixelCount; i++) {
+        const v = closed[i] - gray[i];
+        blackhat[i] = v;
+        sum += v;
+        sumSq += v * v;
+    }
+    const mean = sum / pixelCount;
+    const std = Math.sqrt(Math.max(0, sumSq / pixelCount - mean * mean));
+    const bhThresh = mean + std; // adaptive threshold
+
+    const maskBH = new Uint8Array(pixelCount);
+    for (let i = 0; i < pixelCount; i++) {
+        maskBH[i] = blackhat[i] > bhThresh ? 1 : 0;
+    }
+
+    // L* percentile mask (10% darkest)
+    const Lvals = new Float32Array(pixelCount);
+    for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
+        const { L } = rgbToLab(data[i], data[i + 1], data[i + 2]);
+        Lvals[idx] = L;
+    }
+    const Lsorted = Array.from(Lvals).sort((a, b) => a - b);
+    const p10 = Lsorted[Math.floor(0.1 * (Lsorted.length - 1))] || 0;
+    const maskL = new Uint8Array(pixelCount);
+    for (let i = 0; i < pixelCount; i++) {
+        maskL[i] = Lvals[i] < p10 ? 1 : 0;
+    }
+
+    // Combine masks
+    const mask = new Uint8Array(pixelCount);
+    for (let i = 0; i < pixelCount; i++) {
+        mask[i] = maskBH[i] || maskL[i] ? 1 : 0;
+    }
+
+    // Morphological cleanup (closing)
+    const maskClosed = erodeMask(dilateMask(mask, width, height), width, height);
+
+    // Simple inpaint: average nearest neighbors within radius 2
+    const cleaned = new ImageData(new Uint8ClampedArray(data), width, height);
+    const radius = 2;
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const idx = y * width + x;
+            if (!maskClosed[idx]) continue;
+            let rs = 0, gs = 0, bs = 0, count = 0;
+            for (let dy = -radius; dy <= radius; dy++) {
+                const yy = y + dy;
+                if (yy < 0 || yy >= height) continue;
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const xx = x + dx;
+                    if (xx < 0 || xx >= width) continue;
+                    const nIdx = yy * width + xx;
+                    if (maskClosed[nIdx]) continue;
+                    const base = nIdx * 4;
+                    rs += data[base];
+                    gs += data[base + 1];
+                    bs += data[base + 2];
+                    count++;
+                }
+            }
+            const base = idx * 4;
+            if (count > 0) {
+                cleaned.data[base] = Math.round(rs / count);
+                cleaned.data[base + 1] = Math.round(gs / count);
+                cleaned.data[base + 2] = Math.round(bs / count);
+            } else {
+                // fallback: keep original pixel
+                cleaned.data[base] = data[base];
+                cleaned.data[base + 1] = data[base + 1];
+                cleaned.data[base + 2] = data[base + 2];
+            }
+        }
+    }
+
+    return { cleanedImage: cleaned, mask: maskClosed };
+}
+
+// 3x3 dilation/erosion for grayscale
+function dilateGray(src, w, h) {
+    const out = new Float32Array(src.length);
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            let m = -Infinity;
+            for (let dy = -1; dy <= 1; dy++) {
+                const yy = y + dy;
+                if (yy < 0 || yy >= h) continue;
+                for (let dx = -1; dx <= 1; dx++) {
+                    const xx = x + dx;
+                    if (xx < 0 || xx >= w) continue;
+                    const v = src[yy * w + xx];
+                    if (v > m) m = v;
+                }
+            }
+            out[y * w + x] = m;
+        }
+    }
+    return out;
+}
+
+function erodeGray(src, w, h) {
+    const out = new Float32Array(src.length);
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            let m = Infinity;
+            for (let dy = -1; dy <= 1; dy++) {
+                const yy = y + dy;
+                if (yy < 0 || yy >= h) continue;
+                for (let dx = -1; dx <= 1; dx++) {
+                    const xx = x + dx;
+                    if (xx < 0 || xx >= w) continue;
+                    const v = src[yy * w + xx];
+                    if (v < m) m = v;
+                }
+            }
+            out[y * w + x] = m;
+        }
+    }
+    return out;
+}
+
+// 3x3 morphology for binary mask (Uint8Array 0/1)
+function dilateMask(src, w, h) {
+    const out = new Uint8Array(src.length);
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            let v = 0;
+            for (let dy = -1; dy <= 1 && !v; dy++) {
+                const yy = y + dy;
+                if (yy < 0 || yy >= h) continue;
+                for (let dx = -1; dx <= 1; dx++) {
+                    const xx = x + dx;
+                    if (xx < 0 || xx >= w) continue;
+                    if (src[yy * w + xx]) { v = 1; break; }
+                }
+            }
+            out[y * w + x] = v;
+        }
+    }
+    return out;
+}
+
+function erodeMask(src, w, h) {
+    const out = new Uint8Array(src.length);
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            let v = 1;
+            for (let dy = -1; dy <= 1 && v; dy++) {
+                const yy = y + dy;
+                if (yy < 0 || yy >= h) { v = 0; break; }
+                for (let dx = -1; dx <= 1; dx++) {
+                    const xx = x + dx;
+                    if (xx < 0 || xx >= w) { v = 0; break; }
+                    if (!src[yy * w + xx]) { v = 0; break; }
+                }
+            }
+            out[y * w + x] = v;
+        }
+    }
+    return out;
+}
 
 // Wire up nav buttons and close icons after module load
 document.querySelectorAll('.nav-link[data-modal]').forEach(btn => {
