@@ -57,8 +57,8 @@
                         </div>
                         <div class="technique-item" data-technique="rgb-ratio">
                             <div class="order-badge">4</div>
-                            <h4>RGB Ratio Enhancement</h4>
-                            <p>Emphasizes red channel</p>
+                            <h4>Spectral Ratio Composite</h4>
+                            <p>G/R, R/G, (B·G)/R pseudo-color</p>
                         </div>
                         <div class="technique-item" data-technique="melanin-filter">
                             <div class="order-badge">5</div>
@@ -193,25 +193,25 @@
     <div id="modalRGBRatio" class="modal">
         <div class="modal-content">
             <span class="close" data-close="rgb-ratio">&times;</span>
-            <h2>RGB Ratio Enhancement</h2>
+            <h2>Spectral Ratio Composite</h2>
             
             <h3>What is it?</h3>
-            <p>This technique analyzes the relative proportions of Red, Green, and Blue channels to emphasize areas where red dominates, which is characteristic of erythema.</p>
+            <p>This technique builds three ratio maps inspired by multispectral separation using only RGB:</p>
+            <ul>
+                <li>G/R (vermelho forte ⇒ valor baixo)</li>
+                <li>R/G (vermelho forte ⇒ valor alto)</li>
+                <li>(B·G)/R (fundo neutro alto, regiões vermelhas baixas)</li>
+            </ul>
 
             <h3>Method</h3>
-            <p>The technique calculates ratios such as:</p>
-            <ul>
-                <li>R/(G+B) ratio: Emphasizes red relative to other channels</li>
-                <li>(R-G)/(R+G) normalization: Isolates red-green difference</li>
-                <li>Enhanced red channel with green subtraction</li>
-            </ul>
+            <p>Cada mapa é normalizado para 0–255; G/R e (B·G)/R são invertidos para que regiões vermelhas apareçam claras. Em seguida montamos um pseudo-color: R = inv(G/R), G = R/G, B = inv((B·G)/R).</p>
 
             <h3>Advantages</h3>
             <ul>
-                <li>Simple and computationally efficient</li>
-                <li>Works directly in RGB space (no conversion needed)</li>
-                <li>Effective for highlighting areas of increased blood flow</li>
-                <li>Can be tuned with different ratio formulas</li>
+                <li>Usa somente RGB mas separa componentes com diferentes sensibilidades ao vermelho</li>
+                <li>Computacionalmente leve</li>
+                <li>Destaca inflamação tornando regiões vermelhas mais brilhantes</li>
+                <li>Pode ser exibido como três mapas em tons de cinza ou combinado em pseudo-cor</li>
             </ul>
         </div>
     </div>

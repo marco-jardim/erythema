@@ -1,4 +1,4 @@
-import { rgbToLab, labToRgb, calculateErythemaIndex, computeIta, CONTRAST_ENHANCEMENT_FACTOR, labErythemaValue } from './techniques.js';
+import { rgbToLab, labToRgb, calculateErythemaIndex, computeIta, CONTRAST_ENHANCEMENT_FACTOR, labErythemaValue, normalizeToUint8, invertUint8Map, computeSpectralInspiredMaps } from './techniques.js';
 
 // Global state
 let originalImage = null;
@@ -277,25 +277,28 @@ function applyITA(imageData) {
 
 // RGB Ratio filter
 function applyRGBRatio(imageData) {
-    const data = imageData.data;
-    const newData = new ImageData(imageData.width, imageData.height);
-    
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i+1];
-        const b = data[i+2];
-        
-        // Calculate R/(G+B) ratio
-        const ratio = (g + b) > 0 ? r / (g + b) : 0;
-        const normalized = Math.min(1, ratio / 2) * 255;
-        
-        newData.data[i] = normalized;
-        newData.data[i+1] = Math.max(0, g - normalized * 0.5);
-        newData.data[i+2] = Math.max(0, b - normalized * 0.5);
-        newData.data[i+3] = 255;
+    const { width, height } = imageData;
+    const pixelCount = width * height;
+    const { mapGR, mapRG, mapBGR } = computeSpectralInspiredMaps(imageData);
+
+    // Normalize maps
+    const normGR = normalizeToUint8(mapGR).data;       // high = more green, invert later
+    const normRG = normalizeToUint8(mapRG).data;       // high = more red
+    const normBGR = normalizeToUint8(mapBGR).data;     // high = neutral, invert later
+
+    // Invert where redness should be bright
+    const eryFromGR = invertUint8Map(normGR);          // red zones bright
+    const eryFromBGR = invertUint8Map(normBGR);        // red zones bright
+
+    // Compose pseudo-color: R = eryFromGR, G = normRG, B = eryFromBGR
+    const out = new ImageData(width, height);
+    for (let idx = 0, j = 0; idx < pixelCount; idx++, j += 4) {
+        out.data[j] = eryFromGR[idx];
+        out.data[j + 1] = normRG[idx];
+        out.data[j + 2] = eryFromBGR[idx];
+        out.data[j + 3] = 255;
     }
-    
-    return newData;
+    return out;
 }
 
 // Melanin compensation filter

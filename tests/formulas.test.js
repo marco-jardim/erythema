@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateErythemaIndex, computeIta, classifyIta, labErythemaValue } from '../js/techniques.js';
+import { calculateErythemaIndex, computeIta, classifyIta, labErythemaValue, normalizeToUint8, invertUint8Map, computeSpectralInspiredMaps } from '../js/techniques.js';
 
 test('erythema index is zero when red equals green', () => {
     const ei = calculateErythemaIndex(120, 120);
@@ -45,4 +45,34 @@ test('lab erythema follows (Lmax - L) * a', () => {
     // Green (negative a) should reduce the value
     const greenish = labErythemaValue(30, -10, Lmax); // negative
     assert.ok(greenish < 0);
+});
+
+test('normalizeToUint8 maps min to 0 and max to 255', () => {
+    const { data } = normalizeToUint8(new Float32Array([10, 20, 30]));
+    assert.equal(data[0], 0);
+    assert.equal(data[2], 255);
+});
+
+test('invertUint8Map flips 0/255', () => {
+    const inv = invertUint8Map(new Uint8ClampedArray([0, 128, 255]));
+    assert.equal(inv[0], 255);
+    assert.equal(inv[1], 127);
+    assert.equal(inv[2], 0);
+});
+
+test('computeSpectralInspiredMaps matches manual ratios', () => {
+    const data = new Uint8ClampedArray([
+        200, 50, 50, 255,   // pixel 0
+        50, 200, 200, 255   // pixel 1
+    ]);
+    const imageData = { data, width: 2, height: 1 };
+    const { mapGR, mapRG, mapBGR } = computeSpectralInspiredMaps(imageData);
+    // pixel 0
+    assert.ok(Math.abs(mapGR[0] - 0.25) < 1e-6);
+    assert.ok(Math.abs(mapRG[0] - 4.0) < 1e-6);
+    assert.ok(Math.abs(mapBGR[0] - 12.5) < 1e-6);
+    // pixel 1
+    assert.ok(Math.abs(mapGR[1] - 4.0) < 1e-6);
+    assert.ok(Math.abs(mapRG[1] - 0.25) < 1e-6);
+    assert.ok(Math.abs(mapBGR[1] - 800.0) < 1e-3);
 });

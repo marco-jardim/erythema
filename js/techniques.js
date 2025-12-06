@@ -57,6 +57,60 @@ export function labToRgb(L, a, bLab) {
 export function labErythemaValue(L, a, Lmax) {
     return (Lmax - L) * a;
 }
+
+// Normalize a float map to 0..255 Uint8
+export function normalizeToUint8(map) {
+    let min = Infinity;
+    let max = -Infinity;
+    const len = map.length;
+    for (let i = 0; i < len; i++) {
+        const v = map[i];
+        if (v < min) min = v;
+        if (v > max) max = v;
+    }
+    const out = new Uint8ClampedArray(len);
+    if (max === min) {
+        return { data: out, min, max };
+    }
+    const range = max - min;
+    for (let i = 0; i < len; i++) {
+        const t = (map[i] - min) / range;
+        out[i] = Math.round(t * 255);
+    }
+    return { data: out, min, max };
+}
+
+export function invertUint8Map(arr) {
+    const out = new Uint8ClampedArray(arr.length);
+    for (let i = 0; i < arr.length; i++) {
+        out[i] = 255 - arr[i];
+    }
+    return out;
+}
+
+// Compute spectral-inspired ratio maps: G/R, R/G, (B*G)/R
+export function computeSpectralInspiredMaps(imageData) {
+    const { data, width, height } = imageData;
+    const len = width * height;
+    const mapGR = new Float32Array(len);
+    const mapRG = new Float32Array(len);
+    const mapBGR = new Float32Array(len);
+    const eps = 1e-6;
+
+    for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
+        const R = data[i];
+        const G = data[i + 1];
+        const B = data[i + 2];
+        const denomR = Math.max(R, eps);
+        const denomG = Math.max(G, eps);
+
+        mapGR[idx] = G / denomR;
+        mapRG[idx] = R / denomG;
+        mapBGR[idx] = (B * G) / denomR;
+    }
+
+    return { mapGR, mapRG, mapBGR };
+}
 // Erythema Index using the classic reflectance ratio definition:
 // EI = log10(R / G), with channel values serving as a proxy for reflectance.
 export function calculateErythemaIndex(r, g) {
