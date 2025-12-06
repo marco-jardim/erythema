@@ -557,41 +557,75 @@ function reduceHairPerturbation(imageData) {
     // Morphological cleanup (closing)
     const maskClosed = erodeMask(dilateMask(mask, width, height), width, height);
 
-    // Simple inpaint: average nearest neighbors within radius 2
+    // Edge-aware inpaint (Telea-like diffusion with joint bilateral weights)
     const cleaned = new ImageData(new Uint8ClampedArray(data), width, height);
-    const radius = 2;
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const idx = y * width + x;
-            if (!maskClosed[idx]) continue;
-            let rs = 0, gs = 0, bs = 0, count = 0;
-            for (let dy = -radius; dy <= radius; dy++) {
-                const yy = y + dy;
-                if (yy < 0 || yy >= height) continue;
-                for (let dx = -radius; dx <= radius; dx++) {
-                    const xx = x + dx;
-                    if (xx < 0 || xx >= width) continue;
-                    const nIdx = yy * width + xx;
-                    if (maskClosed[nIdx]) continue;
-                    const base = nIdx * 4;
-                    rs += data[base];
-                    gs += data[base + 1];
-                    bs += data[base + 2];
-                    count++;
+    const len4 = data.length;
+    const rBuf = new Float32Array(len4 / 4);
+    const gBuf = new Float32Array(len4 / 4);
+    const bBuf = new Float32Array(len4 / 4);
+    for (let i = 0, p = 0; i < len4; i += 4, p++) {
+        rBuf[p] = data[i];
+        gBuf[p] = data[i + 1];
+        bBuf[p] = data[i + 2];
+    }
+
+    const iterations = 30;
+    const sigma = 25; // color sensitivity
+    const sigma2 = 2 * sigma * sigma;
+
+    for (let it = 0; it < iterations; it++) {
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const idx = y * width + x;
+                if (!maskClosed[idx]) continue; // only inpaint masked pixels
+
+                let wr = 0, wg = 0, wb = 0, wsum = 0;
+
+                // 4-neighbour diffusion
+                const neighbors = [
+                    [x - 1, y],
+                    [x + 1, y],
+                    [x, y - 1],
+                    [x, y + 1]
+                ];
+
+                const baseIdx = idx;
+                const rC = data[baseIdx * 4];
+                const gC = data[baseIdx * 4 + 1];
+                const bC = data[baseIdx * 4 + 2];
+
+                for (const [nx, ny] of neighbors) {
+                    if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+                    const nIdx = ny * width + nx;
+                    const rN = rBuf[nIdx];
+                    const gN = gBuf[nIdx];
+                    const bN = bBuf[nIdx];
+
+                    const dr = rN - rC;
+                    const dg = gN - gC;
+                    const db = bN - bC;
+                    const w = Math.exp(-(dr * dr + dg * dg + db * db) / sigma2);
+
+                    wr += w * rN;
+                    wg += w * gN;
+                    wb += w * bN;
+                    wsum += w;
+                }
+
+                if (wsum > 0) {
+                    rBuf[idx] = wr / wsum;
+                    gBuf[idx] = wg / wsum;
+                    bBuf[idx] = wb / wsum;
                 }
             }
-            const base = idx * 4;
-            if (count > 0) {
-                cleaned.data[base] = Math.round(rs / count);
-                cleaned.data[base + 1] = Math.round(gs / count);
-                cleaned.data[base + 2] = Math.round(bs / count);
-            } else {
-                // fallback: keep original pixel
-                cleaned.data[base] = data[base];
-                cleaned.data[base + 1] = data[base + 1];
-                cleaned.data[base + 2] = data[base + 2];
-            }
         }
+    }
+
+    for (let i = 0, p = 0; i < len4; i += 4, p++) {
+        cleaned.data[i] = Math.round(rBuf[p]);
+        cleaned.data[i + 1] = Math.round(gBuf[p]);
+        cleaned.data[i + 2] = Math.round(bBuf[p]);
+        // alpha stays 255
     }
 
     return { cleanedImage: cleaned, mask: maskClosed };
