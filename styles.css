@@ -157,6 +157,13 @@ input[type="file"] {
     display: none;
 }
 
+.file-upload-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
 /* Technique Selection */
 .technique-grid {
     display: grid;

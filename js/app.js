@@ -46,24 +46,36 @@ let hairApplied = false;
 const EARLY_SET = new Set(['hair-reduction', 'melanin-filter']);
 const LATE_SET = new Set(['contrast-boost']);
 
-// File upload handler
-document.getElementById('imageUpload').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        document.getElementById('fileName').textContent = file.name;
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                originalImage = img;
-                displayOriginalImage();
-                document.getElementById('canvasSection').style.display = 'block';
-                resetSliderPosition();
+// File upload handlers (camera and gallery)
+['imageUpload', 'imageCapture'].forEach(id => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener('change', function(e) {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+            document.getElementById('fileName').textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    originalImage = img;
+                    displayOriginalImage();
+                    document.getElementById('canvasSection').style.display = 'block';
+                    resetSliderPosition();
+                };
+                img.src = event.target.result;
             };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
+            reader.readAsDataURL(file);
+            // reset other input to avoid stale references
+            if (id === 'imageUpload') {
+                const other = document.getElementById('imageCapture');
+                if (other) other.value = '';
+            } else {
+                const other = document.getElementById('imageUpload');
+                if (other) other.value = '';
+            }
+        }
+    });
 });
 
 function collectSelectedTechniques() {
