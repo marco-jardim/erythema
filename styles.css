@@ -164,6 +164,11 @@ input[type="file"] {
     gap: 15px;
     margin-bottom: 20px;
 }
+.technique-group h5 {
+    margin: 10px 0 8px;
+    color: #444;
+    font-weight: 700;
+}
 
 .technique-item {
     background: white;

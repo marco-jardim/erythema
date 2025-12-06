@@ -3,6 +3,7 @@ import { rgbToLab, labToRgb, calculateErythemaIndex, computeIta, CONTRAST_ENHANC
 // Global state
 let originalImage = null;
 let selectedTechniques = [];
+const earlyGrid = document.getElementById('earlyGrid');
 
 // Canvas elements
 const originalCanvas = document.getElementById('originalCanvas');
@@ -52,23 +53,28 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
 });
 
 // Technique selection
-document.getElementById('techniqueGrid').addEventListener('click', function(e) {
-    const item = e.target.closest('.technique-item');
-    if (!item) return;
-
-    const technique = item.dataset.technique;
+function bindTechniqueGrid(gridEl) {
+    gridEl.addEventListener('click', function(e) {
+        const item = e.target.closest('.technique-item');
+        if (!item) return;
     
-    if (item.classList.contains('selected')) {
-        item.classList.remove('selected');
-        const index = selectedTechniques.indexOf(technique);
-        selectedTechniques.splice(index, 1);
-    } else {
-        item.classList.add('selected');
-        selectedTechniques.push(technique);
-    }
+        const technique = item.dataset.technique;
+        
+        if (item.classList.contains('selected')) {
+            item.classList.remove('selected');
+            const index = selectedTechniques.indexOf(technique);
+            if (index !== -1) selectedTechniques.splice(index, 1);
+        } else {
+            item.classList.add('selected');
+            selectedTechniques.push(technique);
+        }
+    
+        updateOrderBadges();
+    });
+}
 
-    updateOrderBadges();
-});
+bindTechniqueGrid(document.getElementById('techniqueGrid'));
+bindTechniqueGrid(earlyGrid);
 
 // Display original image
 function displayOriginalImage() {
@@ -145,15 +151,25 @@ function applyFilters() {
         lastLabErythemaImageData = null;
         currentHairMask = null;
 
-        // Optional hair reduction
-        if (hairToggle.checked) {
+        // Early filters executed up front regardless of later order
+        const remainingTechniques = [...selectedTechniques];
+
+        const hairIdx = remainingTechniques.indexOf('hair-reduction');
+        if (hairIdx !== -1) {
             const cleaned = reduceHairPerturbation(imageData);
             imageData = cleaned.cleanedImage;
             currentHairMask = cleaned.mask;
+            remainingTechniques.splice(hairIdx, 1);
+        }
+
+        const melIdx = remainingTechniques.indexOf('melanin-filter');
+        if (melIdx !== -1) {
+            imageData = applyMelaninFilter(imageData);
+            remainingTechniques.splice(melIdx, 1);
         }
         
         // Apply techniques in order
-        for (const technique of selectedTechniques) {
+        for (const technique of remainingTechniques) {
             imageData = applyTechnique(imageData, technique);
         }
 
@@ -674,7 +690,12 @@ document.querySelectorAll('.close[data-close]').forEach(icon => {
     icon.addEventListener('click', () => closeModal(icon.dataset.close));
 });
 
-labToggle.addEventListener('change', redrawProcessed);
+labToggle.addEventListener('change', () => {
+    // Make sure the processed layer is actually visible when toggling
+    setSliderRatio(0.5);
+    applySliderMask();
+    redrawProcessed();
+});
 
 // Expose functions for inline handlers
 window.applyFilters = applyFilters;

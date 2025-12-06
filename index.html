@@ -38,43 +38,60 @@
                 </div>
 
                 <div class="control-group">
-                    <label>Step 2: Select Techniques (click to select, order matters)</label>
-                    <div class="technique-grid" id="techniqueGrid">
-                        <div class="technique-item" data-technique="a-star">
+                    <label>Step 2: Early Filters (apply before others)</label>
+                    <div class="technique-grid" id="earlyGrid">
+                        <div class="technique-item" data-technique="hair-reduction">
                             <div class="order-badge">1</div>
-                            <h4>a* Channel (Lab)</h4>
-                            <p>Isolates red-green chromaticity</p>
-                        </div>
-                        <div class="technique-item" data-technique="erythema-index">
-                            <div class="order-badge">2</div>
-                            <h4>Erythema Index (EI)</h4>
-                            <p>Quantifies redness intensity</p>
-                        </div>
-                        <div class="technique-item" data-technique="ita">
-                            <div class="order-badge">3</div>
-                            <h4>ITA° (Typology Angle)</h4>
-                            <p>Adjusts for skin brightness</p>
-                        </div>
-                        <div class="technique-item" data-technique="rgb-ratio">
-                            <div class="order-badge">4</div>
-                            <h4>Spectral Ratio Composite</h4>
-                            <p>G/R, R/G, (B·G)/R pseudo-color (fake multispectral)</p>
+                            <h4>Hair Reduction</h4>
+                            <p>Mask + inpaint to reduce hair interference</p>
                         </div>
                         <div class="technique-item" data-technique="melanin-filter">
-                            <div class="order-badge">5</div>
+                            <div class="order-badge">2</div>
                             <h4>Melanin Compensation</h4>
                             <p>Reduces melanin masking</p>
                         </div>
-                        <div class="technique-item" data-technique="contrast-boost">
-                            <div class="order-badge">6</div>
-                            <h4>Contrast Enhancement</h4>
-                            <p>Increases visual clarity</p>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Step 3: Main Filters (click to select, order matters)</label>
+                    <div id="techniqueGrid">
+                        <div class="technique-group">
+                            <h5>Core / Early (apply first)</h5>
+                            <div class="technique-grid">
+                                <div class="technique-item" data-technique="a-star">
+                                    <div class="order-badge">1</div>
+                                    <h4>a* Channel (Lab)</h4>
+                                    <p>Isolates red-green chromaticity</p>
+                                </div>
+                                <div class="technique-item" data-technique="erythema-index">
+                                    <div class="order-badge">2</div>
+                                    <h4>Erythema Index (EI)</h4>
+                                    <p>Quantifies redness intensity</p>
+                                </div>
+                                <div class="technique-item" data-technique="ita">
+                                    <div class="order-badge">3</div>
+                                    <h4>ITA° (Typology Angle)</h4>
+                                    <p>Adjusts for skin brightness</p>
+                                </div>
+                                <div class="technique-item" data-technique="rgb-ratio">
+                                    <div class="order-badge">4</div>
+                                    <h4>Spectral Ratio Composite</h4>
+                                    <p>G/R, R/G, (B·G)/R pseudo-color (fake multispectral)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="technique-group">
+                            <h5>Finishing / Late (apply last)</h5>
+                            <div class="technique-grid">
+                                <div class="technique-item" data-technique="contrast-boost">
+                                    <div class="order-badge">5</div>
+                                    <h4>Contrast Enhancement</h4>
+                                    <p>Increases visual clarity</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <label class="toggle-row" style="margin-top:8px;">
-                        <input type="checkbox" id="hairToggle">
-                        <span>Reduce hair interference (mask + inpaint before filters)</span>
-                    </label>
                 </div>
 
                 <div class="control-group">
@@ -100,7 +117,7 @@
                     <div class="canvas-actions">
                         <label class="toggle-row">
                             <input type="checkbox" id="labToggle" disabled>
-                            <span>Mostrar/baixar mapa Lab de eritema (a*)</span>
+                            <span>Show erythema lab map (a*)</span>
                         </label>
                         <button class="download-btn" onclick="downloadProcessed()">💾 Download Result</button>
                     </div>
@@ -282,6 +299,9 @@
         </div>
     </div>
 
+    <footer style="text-align:center; padding:20px; color:#f0f0f0; font-size:14px;">
+        © 2025 Marco Jardim · <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" style="color:#ffe680;">GPL v3</a> · <a href="https://github.com/marco-jardim/erythema" style="color:#ffe680;">Repository</a>
+    </footer>
     <script type="module" src="./js/app.js"></script>
 </body>
 </html>
