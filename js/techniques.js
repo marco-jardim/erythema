@@ -53,6 +53,13 @@ export function labToRgb(L, a, bLab) {
     };
 }
 
+// sRGB (0-255) to linear reflectance (0..1)
+export function srgbToLinear(v255) {
+    const v = v255 / 255;
+    if (v <= 0.04045) return v / 12.92;
+    return Math.pow((v + 0.055) / 1.055, 2.4);
+}
+
 // Lab erythema contribution per pixel using (L_max - L) * a
 export function labErythemaValue(L, a, Lmax) {
     return (Lmax - L) * a;
@@ -98,9 +105,9 @@ export function computeSpectralInspiredMaps(imageData) {
     const eps = 1e-6;
 
     for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
-        const R = data[i];
-        const G = data[i + 1];
-        const B = data[i + 2];
+        const R = srgbToLinear(data[i]);
+        const G = srgbToLinear(data[i + 1]);
+        const B = srgbToLinear(data[i + 2]);
         const denomR = Math.max(R, eps);
         const denomG = Math.max(G, eps);
 
@@ -111,10 +118,12 @@ export function computeSpectralInspiredMaps(imageData) {
 
     return { mapGR, mapRG, mapBGR };
 }
-// Erythema Index using the classic reflectance ratio definition:
-// EI = log10(R / G), with channel values serving as a proxy for reflectance.
+// Erythema Index using log10 of linear reflectance ratio R/G
 export function calculateErythemaIndex(r, g) {
-    return Math.log10((r + 1) / (g + 1));
+    const eps = 1e-6;
+    const rLin = srgbToLinear(r);
+    const gLin = srgbToLinear(g);
+    return Math.log10((rLin + eps) / (gLin + eps));
 }
 
 // Individual Typology Angle in degrees.

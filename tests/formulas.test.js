@@ -7,14 +7,14 @@ test('erythema index is zero when red equals green', () => {
     assert.ok(Math.abs(ei) < 1e-6);
 });
 
-test('erythema index rises when red exceeds green', () => {
+test('erythema index rises when red exceeds green (linearized)', () => {
     const ei = calculateErythemaIndex(200, 100);
-    assert.ok(ei > 0.29 && ei < 0.31); // log10(201/101) ≈ 0.299
+    assert.ok(ei > 0.63 && ei < 0.68); // linearized: ≈0.656
 });
 
-test('erythema index drops below zero when green exceeds red', () => {
+test('erythema index drops below zero when green exceeds red (linearized)', () => {
     const ei = calculateErythemaIndex(80, 160);
-    assert.ok(ei < -0.29 && ei > -0.31); // log10(81/161) ≈ -0.298
+    assert.ok(ei < -0.62 && ei > -0.66); // linearized: ≈-0.642
 });
 
 test('ITA formula matches published definition', () => {
@@ -68,11 +68,11 @@ test('computeSpectralInspiredMaps matches manual ratios', () => {
     const imageData = { data, width: 2, height: 1 };
     const { mapGR, mapRG, mapBGR } = computeSpectralInspiredMaps(imageData);
     // pixel 0
-    assert.ok(Math.abs(mapGR[0] - 0.25) < 1e-6);
-    assert.ok(Math.abs(mapRG[0] - 4.0) < 1e-6);
-    assert.ok(Math.abs(mapBGR[0] - 12.5) < 1e-6);
+    assert.ok(Math.abs(mapGR[0] - 0.055) < 1e-3);
+    assert.ok(Math.abs(mapRG[0] - 18.11) < 1e-2);
+    assert.ok(Math.abs(mapBGR[0] - 0.00176) < 1e-4);
     // pixel 1
-    assert.ok(Math.abs(mapGR[1] - 4.0) < 1e-6);
-    assert.ok(Math.abs(mapRG[1] - 0.25) < 1e-6);
-    assert.ok(Math.abs(mapBGR[1] - 800.0) < 1e-3);
+    assert.ok(Math.abs(mapGR[1] - 18.11) < 1e-2);
+    assert.ok(Math.abs(mapRG[1] - 0.055) < 1e-3);
+    assert.ok(Math.abs(mapBGR[1] - 10.46) < 1e-2);
 });

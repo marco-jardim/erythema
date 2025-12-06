@@ -58,7 +58,7 @@
                         <div class="technique-item" data-technique="rgb-ratio">
                             <div class="order-badge">4</div>
                             <h4>Spectral Ratio Composite</h4>
-                            <p>G/R, R/G, (B·G)/R pseudo-color</p>
+                            <p>G/R, R/G, (B·G)/R pseudo-color (fake multispectral)</p>
                         </div>
                         <div class="technique-item" data-technique="melanin-filter">
                             <div class="order-badge">5</div>
@@ -93,7 +93,13 @@
                         <canvas id="originalCanvas"></canvas>
                         <div id="compareSlider" class="slider-handle" aria-label="Reveal processed image"></div>
                     </div>
-                    <button class="download-btn" onclick="downloadProcessed()">💾 Download Result</button>
+                    <div class="canvas-actions">
+                        <label class="toggle-row">
+                            <input type="checkbox" id="labToggle" disabled>
+                            <span>Mostrar/baixar mapa Lab de eritema (a*)</span>
+                        </label>
+                        <button class="download-btn" onclick="downloadProcessed()">💾 Download Result</button>
+                    </div>
                 </div>
             </div>
         </div>

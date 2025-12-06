@@ -298,6 +298,23 @@ canvas {
     background: #218838;
 }
 
+.canvas-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.toggle-row {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 14px;
+    color: #333;
+}
+
 .overlap-wrapper {
     position: relative;
     display: inline-block;

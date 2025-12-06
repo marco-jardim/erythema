@@ -11,6 +11,7 @@ const originalCtx = originalCanvas.getContext('2d');
 const processedCtx = processedCanvas.getContext('2d');
 const overlapWrapper = document.getElementById('overlapWrapper');
 const compareSlider = document.getElementById('compareSlider');
+const labToggle = document.getElementById('labToggle');
 
 // ITA thresholds for skin type classification (in degrees)
 const ITA_DARK_THRESHOLD = 10;      // Below this: dark to very dark skin
@@ -23,6 +24,10 @@ const LIGHT_SKIN_ENHANCEMENT = 1.0;  // Minimal enhancement for light skin
 
 // Slider state
 let sliderRatio = 1; // 1 = show only original (slider at right), 0 = only processed
+
+// Cached outputs
+let lastProcessedImageData = null;
+let lastLabErythemaImageData = null;
 
 // File upload handler
 document.getElementById('imageUpload').addEventListener('change', function(e) {
@@ -82,6 +87,10 @@ function displayOriginalImage() {
     // Initially hide processed layer until filters run
     processedCtx.clearRect(0, 0, width, height);
     applySliderMask();
+
+    lastProcessedImageData = null;
+    lastLabErythemaImageData = null;
+    updateLabToggleState();
 }
 
 function updateOrderBadges() {
@@ -131,6 +140,7 @@ function applyFilters() {
     setTimeout(() => {
         // Start with original image data
         let imageData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
+        lastLabErythemaImageData = null;
         
         // Apply techniques in order
         for (const technique of selectedTechniques) {
@@ -138,7 +148,9 @@ function applyFilters() {
         }
 
         // Display result
-        processedCtx.putImageData(imageData, 0, 0);
+        lastProcessedImageData = imageData;
+        redrawProcessed();
+        updateLabToggleState();
         document.getElementById('loading').classList.remove('active');
         animateSliderToCenter();
     }, 100);
@@ -206,6 +218,7 @@ function applyAStarChannel(imageData) {
         newData.data[j + 3] = 255;
     }
 
+    lastLabErythemaImageData = newData;
     return newData;
 }
 
@@ -261,14 +274,14 @@ function applyITA(imageData) {
         // Calculate ITA with division by zero protection
         const ita = computeIta(lab.L, lab.b);
         
-        // Adjust erythema detection based on ITA
-        // Lower ITA (darker skin) gets more enhancement
-        const enhancement = ita < ITA_DARK_THRESHOLD ? DARK_SKIN_ENHANCEMENT : 
+        // Adjust erythema by scaling a* (red-green axis) instead of raw RGB
+        const enhancement = ita < ITA_DARK_THRESHOLD ? DARK_SKIN_ENHANCEMENT :
                           (ita < ITA_TAN_THRESHOLD ? TAN_SKIN_ENHANCEMENT : LIGHT_SKIN_ENHANCEMENT);
-        
-        newData.data[i] = Math.min(255, data[i] * enhancement);
-        newData.data[i+1] = data[i+1];
-        newData.data[i+2] = data[i+2];
+
+        const rgb = labToRgb(lab.L, lab.a * enhancement, lab.b);
+        newData.data[i] = rgb.r;
+        newData.data[i+1] = rgb.g;
+        newData.data[i+2] = rgb.b;
         newData.data[i+3] = 255;
     }
     
@@ -416,6 +429,22 @@ function applySliderMask() {
     setSliderRatio(sliderRatio);
 }
 
+function redrawProcessed() {
+    if (labToggle.checked && lastLabErythemaImageData) {
+        processedCtx.putImageData(lastLabErythemaImageData, 0, 0);
+    } else if (lastProcessedImageData) {
+        processedCtx.putImageData(lastProcessedImageData, 0, 0);
+    } else {
+        processedCtx.clearRect(0, 0, processedCanvas.width, processedCanvas.height);
+    }
+}
+
+function updateLabToggleState() {
+    const available = !!lastLabErythemaImageData;
+    labToggle.disabled = !available;
+    if (!available) labToggle.checked = false;
+}
+
 // Drag handling
 let dragging = false;
 
@@ -445,6 +474,8 @@ document.querySelectorAll('.nav-link[data-modal]').forEach(btn => {
 document.querySelectorAll('.close[data-close]').forEach(icon => {
     icon.addEventListener('click', () => closeModal(icon.dataset.close));
 });
+
+labToggle.addEventListener('change', redrawProcessed);
 
 // Expose functions for inline handlers
 window.applyFilters = applyFilters;
