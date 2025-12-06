@@ -45,6 +45,7 @@ let sliderRatio = 1; // 1 = show only original (slider at right), 0 = only proce
 let lastProcessedImageData = null;
 let lastLabErythemaImageData = null;
 let currentHairMask = null;
+let currentConfidenceMask = null;
 let lastEIHbImageData = null;
 let lastFusedHeatmapImageData = null;
 let resultViewMode = 'processed';
@@ -367,42 +368,39 @@ function applyAStarChannel(imageData) {
     // CLAHE on L* (tile ~8x8, clipLimit ~2.0)
     claheL8x8(Lvals, width, height, 2.0);
 
-    // Determine Lmax map (local if derm mode, else global)
-    let LmaxGlobal = -Infinity;
-    let LmaxMap = null;
-    if (dermToggle.checked) {
-        LmaxMap = new Float32Array(pixelCount);
-        const tilesX = 8;
-        const tilesY = 8;
-        const tileW = Math.ceil(width / tilesX);
-        const tileH = Math.ceil(height / tilesY);
-        for (let ty = 0; ty < tilesY; ty++) {
-            for (let tx = 0; tx < tilesX; tx++) {
-                let localMax = -Infinity;
-                for (let y = ty * tileH; y < Math.min((ty + 1) * tileH, height); y++) {
-                    for (let x = tx * tileW; x < Math.min((tx + 1) * tileW, width); x++) {
-                        const idx = y * width + x;
-                        if (currentHairMask && currentHairMask[idx]) continue;
-                        const L = Lvals[idx];
-                        if (L > localMax) localMax = L;
+    // Build confidence mask (hair OR low-signal OR highlight)
+    currentConfidenceMask = new Uint8Array(pixelCount);
+
+    // Determine Lmax map (adaptive tiles)
+    let LmaxMap = new Float32Array(pixelCount);
+    const tilesX = 12;
+    const tilesY = 12;
+    const tileW = Math.ceil(width / tilesX);
+    const tileH = Math.ceil(height / tilesY);
+    for (let ty = 0; ty < tilesY; ty++) {
+        for (let tx = 0; tx < tilesX; tx++) {
+            let localMax = -Infinity;
+            for (let y = ty * tileH; y < Math.min((ty + 1) * tileH, height); y++) {
+                for (let x = tx * tileW; x < Math.min((tx + 1) * tileW, width); x++) {
+                    const idx = y * width + x;
+                    const L = Lvals[idx];
+                    const isHair = currentHairMask && currentHairMask[idx];
+                    const lowSig = L < 5;
+                    const highLight = L > 98;
+                    if (isHair || lowSig || highLight) {
+                        currentConfidenceMask[idx] = 1;
+                        continue;
                     }
+                    if (L > localMax) localMax = L;
                 }
-                if (!isFinite(localMax)) localMax = 100;
-                for (let y = ty * tileH; y < Math.min((ty + 1) * tileH, height); y++) {
-                    for (let x = tx * tileW; x < Math.min((tx + 1) * tileW, width); x++) {
-                        LmaxMap[y * width + x] = localMax;
-                    }
+            }
+            if (!isFinite(localMax)) localMax = 100;
+            for (let y = ty * tileH; y < Math.min((ty + 1) * tileH, height); y++) {
+                for (let x = tx * tileW; x < Math.min((tx + 1) * tileW, width); x++) {
+                    LmaxMap[y * width + x] = localMax;
                 }
             }
         }
-    } else {
-        for (let idx = 0; idx < pixelCount; idx++) {
-            if (!currentHairMask || !currentHairMask[idx]) {
-                const L = Lvals[idx];
-                if (L > LmaxGlobal) LmaxGlobal = L;
-            }
-        }
-        if (!isFinite(LmaxGlobal)) LmaxGlobal = 100;
     }
 
     // Compute erythema map and min/max
@@ -412,11 +410,11 @@ function applyAStarChannel(imageData) {
     for (let idx = 0; idx < pixelCount; idx++) {
         const L = Lvals[idx];
         const aVal = aVals[idx];
-        const Lmax = dermToggle.checked ? LmaxMap[idx] : LmaxGlobal;
+        const Lmax = LmaxMap[idx];
         const e = labErythemaValue(L, aVal, Lmax);
         const fused = 0.6 * e + 0.4 * eiHbVals[idx];
         fusedVals[idx] = fused;
-        if (!currentHairMask || !currentHairMask[idx]) {
+        if (!currentConfidenceMask[idx]) {
             if (fused < min) min = fused;
             if (fused > max) max = fused;
         }
@@ -426,7 +424,7 @@ function applyAStarChannel(imageData) {
     const newData = new ImageData(width, height);
 
     for (let idx = 0, j = 0; idx < pixelCount; idx++, j += 4) {
-        if (currentHairMask && currentHairMask[idx]) {
+        if (currentConfidenceMask[idx]) {
             newData.data[j] = 0;
             newData.data[j + 1] = 0;
             newData.data[j + 2] = 0;
@@ -517,16 +515,15 @@ function applyRGBRatio(imageData) {
     const pixelCount = width * height;
     const { mapGR, mapRG, mapBGR } = computeSpectralInspiredMaps(imageData);
 
-    // Normalize maps
-    let normGR = normalizeToUint8(mapGR).data;       // high = more green, invert later
-    let normRG = normalizeToUint8(mapRG).data;       // high = more red
-    let normBGR = normalizeToUint8(mapBGR).data;     // high = neutral, invert later
+    // Denoise ratio maps (float bilateral in linear space)
+    const mapGRd = bilateralFloat(mapGR, width, height, 2, 0.05);
+    const mapRGd = bilateralFloat(mapRG, width, height, 2, 0.05);
+    const mapBGRd = bilateralFloat(mapBGR, width, height, 2, 0.05);
 
-    if (dermToggle.checked) {
-        normGR = bilateralUint8(normGR, width, height);
-        normRG = bilateralUint8(normRG, width, height);
-        normBGR = bilateralUint8(normBGR, width, height);
-    }
+    // Normalize maps
+    let normGR = normalizeToUint8(mapGRd).data;       // high = more green, invert later
+    let normRG = normalizeToUint8(mapRGd).data;       // high = more red
+    let normBGR = normalizeToUint8(mapBGRd).data;     // high = neutral, invert later
 
     // Invert where redness should be bright
     const eryFromGR = invertUint8Map(normGR);          // red zones bright
@@ -630,10 +627,10 @@ function downloadConfidenceMask() {
     maskCanvas.height = h;
     const ctx = maskCanvas.getContext('2d');
     const imgData = ctx.createImageData(w, h);
-    // White = confident, Black = masked hair
+    // White = confident, Black = masked / uncertain
     for (let i = 0, idx = 0; idx < w * h; idx++, i += 4) {
-        const isHair = (currentHairMask && currentHairMask[idx]) ? 1 : 0;
-        const val = isHair ? 0 : 255;
+        const isMask = (currentConfidenceMask && currentConfidenceMask[idx]) ? 1 : 0;
+        const val = isMask ? 0 : 255;
         imgData.data[i] = val;
         imgData.data[i + 1] = val;
         imgData.data[i + 2] = val;
@@ -777,7 +774,7 @@ function computeEIHbMap(imageData) {
         const b = srgbToLinear(data[i + 2]);
         const v = Math.log10((r + eps) / (g + 0.5 * b + eps));
         vals[idx] = v;
-        if (!currentHairMask || !currentHairMask[idx]) {
+        if (!currentConfidenceMask || !currentConfidenceMask[idx]) {
             if (v < min) min = v;
             if (v > max) max = v;
         }
@@ -862,7 +859,7 @@ window.addEventListener('pointerup', (e) => {
     compareSlider.releasePointerCapture(e.pointerId);
 });
 
-// Hair reduction pipeline: detect mask, simple inpaint, return cleaned image
+    // Hair reduction pipeline: detect mask, simple inpaint, return cleaned image
 function reduceHairPerturbation(imageData) {
     const { data, width, height } = imageData;
     const pixelCount = width * height;
@@ -907,10 +904,20 @@ function reduceHairPerturbation(imageData) {
         maskL[i] = Lvals[i] < p10 ? 1 : 0;
     }
 
-    // Combine masks
+    // Color prior: very dark in all channels (linear 0-255)
+    const maskColor = new Uint8Array(pixelCount);
+    for (let i = 0, idx = 0; i < data.length; i += 4, idx++) {
+        const r = srgbToLinear(data[i]) * 255;
+        const g = srgbToLinear(data[i + 1]) * 255;
+        const b = srgbToLinear(data[i + 2]) * 255;
+        maskColor[idx] = Math.max(r, g, b) < 60 ? 1 : 0;
+    }
+
+    // Combine masks with color prior AND condition
     const mask = new Uint8Array(pixelCount);
     for (let i = 0; i < pixelCount; i++) {
-        mask[i] = maskBH[i] || maskL[i] ? 1 : 0;
+        const candidate = (maskBH[i] || maskL[i]) ? 1 : 0;
+        mask[i] = candidate && maskColor[i] ? 1 : 0;
     }
 
     // Morphological cleanup (closing)
@@ -1099,6 +1106,36 @@ function bilateralUint8(map, w, h, sigmaSpatial = 1, sigmaRange = 12) {
                 }
             }
             out[y * w + x] = den > 0 ? Math.round(num / den) : center;
+        }
+    }
+    return out;
+}
+
+// Bilateral smoothing for Float32 maps
+function bilateralFloat(src, w, h, sigmaSpatial = 2, sigmaRange = 0.05) {
+    const out = new Float32Array(src.length);
+    const ss = 2 * sigmaSpatial * sigmaSpatial;
+    const sr = 2 * sigmaRange * sigmaRange;
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            let num = 0;
+            let den = 0;
+            const center = src[y * w + x];
+            for (let dy = -2; dy <= 2; dy++) {
+                const yy = y + dy;
+                if (yy < 0 || yy >= h) continue;
+                for (let dx = -2; dx <= 2; dx++) {
+                    const xx = x + dx;
+                    if (xx < 0 || xx >= w) continue;
+                    const v = src[yy * w + xx];
+                    const dsq = dx * dx + dy * dy;
+                    const dr = v - center;
+                    const wgt = Math.exp(-dsq / ss - (dr * dr) / sr);
+                    num += wgt * v;
+                    den += wgt;
+                }
+            }
+            out[y * w + x] = den > 0 ? num / den : center;
         }
     }
     return out;
