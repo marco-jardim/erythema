@@ -1,4 +1,4 @@
-import { rgbToLab, labToRgb, calculateErythemaIndex, computeIta, CONTRAST_ENHANCEMENT_FACTOR, labErythemaValue, normalizeToUint8, invertUint8Map, computeSpectralInspiredMaps } from './techniques.js';
+import { rgbToLab, labToRgb, calculateErythemaIndex, computeIta, CONTRAST_ENHANCEMENT_FACTOR, labErythemaValue, normalizeToUint8, invertUint8Map, computeSpectralInspiredMaps, srgbToLinear } from './techniques.js';
 
 // Global state
 let originalImage = null;
