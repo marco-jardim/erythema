@@ -15,6 +15,8 @@ const compareSlider = document.getElementById('compareSlider');
 const labToggle = document.getElementById('labToggle');
 const hairToggle = document.getElementById('hairToggle');
 const dermToggle = document.getElementById('dermToggle');
+const labViewBtn = document.getElementById('labViewBtn');
+const fusedViewBtn = document.getElementById('fusedViewBtn');
 const labPreviewCanvas = document.getElementById('labPreviewCanvas');
 const heatmapPreviewCanvas = document.getElementById('heatmapPreviewCanvas');
 const labPreviewCtx = labPreviewCanvas.getContext('2d');
@@ -38,6 +40,7 @@ let lastLabErythemaImageData = null;
 let currentHairMask = null;
 let lastEIHbImageData = null;
 let lastFusedHeatmapImageData = null;
+let resultViewMode = 'processed';
 
 // File upload handler
 document.getElementById('imageUpload').addEventListener('change', function(e) {
@@ -613,9 +616,9 @@ function applySliderMask() {
 }
 
 function redrawProcessed() {
-    if (dermToggle.checked && lastFusedHeatmapImageData) {
+    if (resultViewMode === 'fused' && lastFusedHeatmapImageData) {
         processedCtx.putImageData(lastFusedHeatmapImageData, 0, 0);
-    } else if (labToggle.checked && lastLabErythemaImageData) {
+    } else if ((resultViewMode === 'lab' || labToggle.checked) && lastLabErythemaImageData) {
         processedCtx.putImageData(lastLabErythemaImageData, 0, 0);
     } else if (lastProcessedImageData) {
         processedCtx.putImageData(lastProcessedImageData, 0, 0);
@@ -628,6 +631,16 @@ function updateLabToggleState() {
     const available = !!lastLabErythemaImageData;
     labToggle.disabled = !available;
     if (!available) labToggle.checked = false;
+    updateViewButtons();
+}
+
+function updateViewButtons() {
+    const fusedAvail = !!lastFusedHeatmapImageData;
+    const labAvail = !!lastLabErythemaImageData;
+    fusedViewBtn.disabled = !fusedAvail;
+    labViewBtn.disabled = !labAvail;
+    labViewBtn.classList.toggle('active', resultViewMode === 'lab');
+    fusedViewBtn.classList.toggle('active', resultViewMode === 'fused');
 }
 
 function colorizeHeat(value) {
@@ -704,6 +717,17 @@ function generatePreviewMaps(baseImageData) {
     }
     heatmapPreviewCtx.putImageData(fused, 0, 0);
     lastFusedHeatmapImageData = fused;
+
+    // Set preferred view mode defaults
+    if (dermToggle.checked && fused) {
+        resultViewMode = 'fused';
+    } else if (lastLabErythemaImageData) {
+        resultViewMode = 'lab';
+    } else {
+        resultViewMode = 'processed';
+    }
+    updateViewButtons();
+    redrawProcessed();
 }
 
 // Drag handling
@@ -1012,12 +1036,28 @@ labToggle.addEventListener('change', () => {
     // Make sure the processed layer is actually visible when toggling
     setSliderRatio(0.5);
     applySliderMask();
+    resultViewMode = labToggle.checked ? 'lab' : 'processed';
     redrawProcessed();
 });
 
 dermToggle.addEventListener('change', () => {
     setSliderRatio(0.5);
     applySliderMask();
+    resultViewMode = dermToggle.checked ? 'fused' : 'processed';
+    redrawProcessed();
+});
+
+labViewBtn.addEventListener('click', () => {
+    if (labViewBtn.disabled) return;
+    resultViewMode = 'lab';
+    updateViewButtons();
+    redrawProcessed();
+});
+
+fusedViewBtn.addEventListener('click', () => {
+    if (fusedViewBtn.disabled) return;
+    resultViewMode = 'fused';
+    updateViewButtons();
     redrawProcessed();
 });
 
