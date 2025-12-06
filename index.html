@@ -19,6 +19,7 @@
                 <button class="nav-link" data-modal="rgb-ratio">RGB Ratio</button>
                 <button class="nav-link" data-modal="melanin">Melanin Filter</button>
                 <button class="nav-link" data-modal="contrast-boost">Contrast Enhancement</button>
+                <button class="nav-link" data-modal="hair-reduction">Hair Reduction</button>
             </div>
         </nav>
 
@@ -296,6 +297,27 @@
 
             <h3>Best Practices</h3>
             <p>Contrast enhancement is most effective when applied as the final step in a processing pipeline, after color-space transformations and spectral filtering have isolated the erythema signature.</p>
+        </div>
+    </div>
+
+    <div id="modalHairReduction" class="modal">
+        <div class="modal-content">
+            <span class="close" data-close="hair-reduction">&times;</span>
+            <h2>Hair Reduction</h2>
+
+            <h3>Goal</h3>
+            <p>Minimize hair interference so erythema metrics (a*, EI, ratios) rely on skin pixels instead of dark hair strands.</p>
+
+            <h3>Pipeline used here</h3>
+            <ul>
+                <li><strong>Detect hair</strong>: black-hat style line enhancement on grayscale + 10% darkest L* percentile mask.</li>
+                <li><strong>Clean mask</strong>: 3×3 morphological closing to remove noise and fill gaps.</li>
+                <li><strong>Inpaint</strong>: replace masked pixels with nearby skin averages (radius 2) to estimate skin under hair.</li>
+                <li><strong>Protect metrics</strong>: hair pixels are excluded from L<sub>max</sub> / min-max stats and rendered black in the Lab map.</li>
+            </ul>
+
+            <h3>When to use</h3>
+            <p>Enable this early filter when dense hair would skew redness calculations or hide inflammation. It runs before all other filters.</p>
         </div>
     </div>
 
