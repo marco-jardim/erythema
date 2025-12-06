@@ -22,6 +22,12 @@ const labPreviewCanvas = document.getElementById('labPreviewCanvas');
 const heatmapPreviewCanvas = document.getElementById('heatmapPreviewCanvas');
 const labPreviewCtx = labPreviewCanvas.getContext('2d');
 const heatmapPreviewCtx = heatmapPreviewCanvas.getContext('2d');
+const cameraPreview = document.getElementById('cameraPreview');
+const cameraWrapper = document.getElementById('cameraPreviewWrapper');
+const cameraStartBtn = document.getElementById('cameraStartBtn');
+const cameraSnapBtn = document.getElementById('cameraSnapBtn');
+const cameraStopBtn = document.getElementById('cameraStopBtn');
+let cameraStream = null;
 
 // ITA thresholds for skin type classification (in degrees)
 const ITA_DARK_THRESHOLD = 10;      // Below this: dark to very dark skin
@@ -46,37 +52,74 @@ let hairApplied = false;
 const EARLY_SET = new Set(['hair-reduction', 'melanin-filter']);
 const LATE_SET = new Set(['contrast-boost']);
 
-// File upload handlers (camera and gallery)
+// Unified loader for data URLs
+function loadImageFromDataUrl(dataUrl, name = 'image') {
+    document.getElementById('fileName').textContent = name;
+    const img = new Image();
+    img.onload = function() {
+        originalImage = img;
+        displayOriginalImage();
+        document.getElementById('canvasSection').style.display = 'block';
+        resetSliderPosition();
+    };
+    img.src = dataUrl;
+}
+
+// File upload handlers (camera input and gallery input)
 ['imageUpload', 'imageCapture'].forEach(id => {
     const input = document.getElementById(id);
     if (!input) return;
     input.addEventListener('change', function(e) {
         const file = e.target.files && e.target.files[0];
         if (file) {
-            document.getElementById('fileName').textContent = file.name;
             const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    originalImage = img;
-                    displayOriginalImage();
-                    document.getElementById('canvasSection').style.display = 'block';
-                    resetSliderPosition();
-                };
-                img.src = event.target.result;
-            };
+            reader.onload = (event) => loadImageFromDataUrl(event.target.result, file.name);
             reader.readAsDataURL(file);
-            // reset other input to avoid stale references
-            if (id === 'imageUpload') {
-                const other = document.getElementById('imageCapture');
-                if (other) other.value = '';
-            } else {
-                const other = document.getElementById('imageUpload');
-                if (other) other.value = '';
-            }
+            // reset the other input
+            const otherId = id === 'imageUpload' ? 'imageCapture' : 'imageUpload';
+            const other = document.getElementById(otherId);
+            if (other) other.value = '';
         }
     });
 });
+
+// Desktop camera handling
+async function startCamera() {
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        cameraPreview.srcObject = cameraStream;
+        cameraWrapper.style.display = 'block';
+        cameraStartBtn.disabled = true;
+        cameraSnapBtn.disabled = false;
+        cameraStopBtn.disabled = false;
+    } catch (err) {
+        alert('Unable to access camera: ' + err.message);
+    }
+}
+
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+    }
+    cameraPreview.srcObject = null;
+    cameraWrapper.style.display = 'none';
+    cameraStartBtn.disabled = false;
+    cameraSnapBtn.disabled = true;
+    cameraStopBtn.disabled = true;
+}
+
+function snapCamera() {
+    if (!cameraStream) return;
+    const video = cameraPreview;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL('image/png');
+    loadImageFromDataUrl(dataUrl, 'captured.png');
+}
 
 function collectSelectedTechniques() {
     const items = Array.from(document.querySelectorAll('.technique-item.selected'));
@@ -1140,6 +1183,10 @@ dermBtn.addEventListener('click', () => {
     resultViewMode = dermToggle.checked ? 'fused' : 'processed';
     redrawProcessed();
 });
+
+cameraStartBtn.addEventListener('click', startCamera);
+cameraStopBtn.addEventListener('click', stopCamera);
+cameraSnapBtn.addEventListener('click', snapCamera);
 
 // Expose functions for inline handlers
 window.applyFilters = applyFilters;

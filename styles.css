@@ -164,6 +164,20 @@ input[type="file"] {
     align-items: center;
 }
 
+.camera-preview {
+    margin-top: 10px;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 480px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.camera-preview video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
 /* Technique Selection */
 .technique-grid {
     display: grid;

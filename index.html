@@ -38,9 +38,15 @@
                         <label for="imageUpload" class="file-upload">
                             📁 Choose from Gallery
                         </label>
+                        <button type="button" class="file-upload" id="cameraStartBtn">🎥 Start Desktop Camera</button>
+                        <button type="button" class="file-upload" id="cameraSnapBtn" disabled>📸 Capture Frame</button>
+                        <button type="button" class="file-upload" id="cameraStopBtn" disabled>🛑 Stop Camera</button>
                     </div>
                     <input type="file" id="imageCapture" accept="image/*" capture="environment">
                     <input type="file" id="imageUpload" accept="image/*">
+                    <div class="camera-preview" id="cameraPreviewWrapper" style="display:none;">
+                        <video id="cameraPreview" autoplay playsinline></video>
+                    </div>
                     <span id="fileName" style="margin-left: 15px; color: #666;"></span>
                 </div>
 
