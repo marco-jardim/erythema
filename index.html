@@ -12,13 +12,13 @@
             <h1>🔬 Erythema Detection Tool</h1>
             <p>Advanced spectral filtering techniques for enhanced erythema detection in darker skin tones</p>
             <div class="nav-links">
-                <button class="nav-link" onclick="showModal('erythema')">About Erythema</button>
-                <button class="nav-link" onclick="showModal('a-star')">a* Channel</button>
-                <button class="nav-link" onclick="showModal('erythema-index')">Erythema Index</button>
-                <button class="nav-link" onclick="showModal('ita')">ITA° Index</button>
-                <button class="nav-link" onclick="showModal('rgb-ratio')">RGB Ratio</button>
-                <button class="nav-link" onclick="showModal('melanin')">Melanin Filter</button>
-                <button class="nav-link" onclick="showModal('contrast-boost')">Contrast Enhancement</button>
+                <button class="nav-link" data-modal="erythema">About Erythema</button>
+                <button class="nav-link" data-modal="a-star">a* Channel</button>
+                <button class="nav-link" data-modal="erythema-index">Erythema Index</button>
+                <button class="nav-link" data-modal="ita">ITA° Index</button>
+                <button class="nav-link" data-modal="rgb-ratio">RGB Ratio</button>
+                <button class="nav-link" data-modal="melanin">Melanin Filter</button>
+                <button class="nav-link" data-modal="contrast-boost">Contrast Enhancement</button>
             </div>
         </nav>
 
@@ -106,7 +106,7 @@
     <!-- Modals for technique explanations -->
     <div id="modalErythema" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('erythema')">&times;</span>
+            <span class="close" data-close="erythema">&times;</span>
             <h2>About Erythema Detection</h2>
             <p>Erythema is the reddening of the skin caused by increased blood flow in superficial capillaries. It's a key indicator of inflammation, allergic reactions, or irritation.</p>
             
@@ -126,7 +126,7 @@
 
     <div id="modalAStar" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('a-star')">&times;</span>
+            <span class="close" data-close="a-star">&times;</span>
             <h2>a* Channel (Lab Color Space)</h2>
             
             <h3>What is it?</h3>
@@ -147,7 +147,7 @@
 
     <div id="modalErythemaIndex" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('erythema-index')">&times;</span>
+            <span class="close" data-close="erythema-index">&times;</span>
             <h2>Erythema Index (EI)</h2>
             
             <h3>What is it?</h3>
@@ -170,7 +170,7 @@
 
     <div id="modalITA" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('ita')">&times;</span>
+            <span class="close" data-close="ita">&times;</span>
             <h2>Individual Typology Angle (ITA°)</h2>
             
             <h3>What is it?</h3>
@@ -196,7 +196,7 @@
 
     <div id="modalRGBRatio" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('rgb-ratio')">&times;</span>
+            <span class="close" data-close="rgb-ratio">&times;</span>
             <h2>RGB Ratio Enhancement</h2>
             
             <h3>What is it?</h3>
@@ -222,7 +222,7 @@
 
     <div id="modalMelanin" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('melanin')">&times;</span>
+            <span class="close" data-close="melanin">&times;</span>
             <h2>Melanin Compensation Filter</h2>
             
             <h3>The Challenge</h3>
@@ -247,7 +247,7 @@
 
     <div id="modalContrastBoost" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('contrast-boost')">&times;</span>
+            <span class="close" data-close="contrast-boost">&times;</span>
             <h2>Contrast Enhancement</h2>
             
             <h3>What is it?</h3>

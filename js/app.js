@@ -334,6 +334,15 @@ window.onclick = function(event) {
     }
 };
 
+// Wire up nav buttons and close icons after module load
+document.querySelectorAll('.nav-link[data-modal]').forEach(btn => {
+    btn.addEventListener('click', () => showModal(btn.dataset.modal));
+});
+
+document.querySelectorAll('.close[data-close]').forEach(icon => {
+    icon.addEventListener('click', () => closeModal(icon.dataset.close));
+});
+
 // Expose functions for inline handlers
 window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;
