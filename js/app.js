@@ -98,6 +98,8 @@ async function startCamera() {
         cameraStartBtn.disabled = true;
         cameraSnapBtn.disabled = false;
         cameraStopBtn.disabled = false;
+        cameraSnapBtn.classList.remove('hidden');
+        cameraStopBtn.classList.remove('hidden');
         requestAnimationFrame(() => {
             cameraWrapper.style.opacity = '1';
         });
@@ -117,6 +119,8 @@ function stopCamera() {
     cameraStartBtn.disabled = false;
     cameraSnapBtn.disabled = true;
     cameraStopBtn.disabled = true;
+    cameraSnapBtn.classList.add('hidden');
+    cameraStopBtn.classList.add('hidden');
 }
 
 function snapCamera() {

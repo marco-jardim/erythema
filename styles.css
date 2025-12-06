@@ -129,7 +129,7 @@ nav p {
 }
 
 .control-group {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .control-group label {
@@ -143,7 +143,7 @@ nav p {
     display: inline-block;
     padding: 12px 30px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    color: white !important;
     border-radius: 5px;
     cursor: pointer;
     transition: transform 0.3s;
@@ -162,6 +162,7 @@ input[type="file"] {
     gap: 10px;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-start;
 }
 
 .desktop-only { display: none; }
@@ -346,6 +347,10 @@ canvas {
     color: #333;
 }
 
+.hidden { display: none !important; }
+.desktop-only.hidden { display: none !important; }
+.mobile-only.hidden { display: none !important; }
+
 .overlap-wrapper {
     position: relative;
     display: inline-block;
@@ -484,6 +489,6 @@ canvas {
 }
 
 @media (min-width: 769px) {
-    .desktop-only { display: inline-block !important; }
+    .desktop-only { display: inline-flex !important; }
     .mobile-only { display: none !important; }
 }
