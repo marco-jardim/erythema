@@ -181,32 +181,48 @@ function applyFilters() {
         lastFusedHeatmapImageData = null;
         hairApplied = false;
 
-        // Early filters executed up front regardless of later order
-        const remainingTechniques = [...selectedTechniques];
-
-        const hairIdx = dermToggle.checked ? 0 : remainingTechniques.indexOf('hair-reduction');
-        if (hairIdx !== -1) {
-            const cleaned = reduceHairPerturbation(imageData);
-            imageData = cleaned.cleanedImage;
-            currentHairMask = cleaned.mask;
-            if (hairIdx < remainingTechniques.length) remainingTechniques.splice(hairIdx, 1);
-            hairApplied = true;
+        // Partition techniques: early, main, late (order preserved within groups)
+        const earlySet = new Set(['hair-reduction', 'melanin-filter']);
+        const lateSet = new Set(['contrast-boost']);
+        let earlyQueue = [];
+        let mainQueue = [];
+        let lateQueue = [];
+        for (const t of selectedTechniques) {
+            if (earlySet.has(t)) earlyQueue.push(t);
+            else if (lateSet.has(t)) lateQueue.push(t);
+            else mainQueue.push(t);
+        }
+        // Derm preset forces hair + melanin early
+        if (dermToggle.checked) {
+            if (!earlyQueue.includes('hair-reduction')) earlyQueue.unshift('hair-reduction');
+            if (!earlyQueue.includes('melanin-filter')) earlyQueue.push('melanin-filter');
         }
 
-        const melIdx = remainingTechniques.indexOf('melanin-filter');
-        if (melIdx !== -1 || dermToggle.checked) {
-            imageData = applyMelaninFilter(imageData);
-            if (melIdx !== -1) remainingTechniques.splice(melIdx, 1);
+        // Run early
+        for (const t of earlyQueue) {
+            if (t === 'hair-reduction') {
+                const cleaned = reduceHairPerturbation(imageData);
+                imageData = cleaned.cleanedImage;
+                currentHairMask = cleaned.mask;
+                hairApplied = true;
+            } else if (t === 'melanin-filter') {
+                imageData = applyMelaninFilter(imageData);
+            }
         }
 
         const mapBase = imageData;
 
-        // Apply techniques in order
-        for (const technique of remainingTechniques) {
-            imageData = applyTechnique(imageData, technique);
+        // Run main
+        for (const t of mainQueue) {
+            imageData = applyTechnique(imageData, t);
         }
 
-        // Light contrast boost at end for derm mode
+        // Run late
+        for (const t of lateQueue) {
+            imageData = applyTechnique(imageData, t);
+        }
+
+        // Light contrast boost at end for derm mode (after late)
         if (dermToggle.checked) {
             imageData = applyContrastGeneric(imageData, 1.1);
         }
