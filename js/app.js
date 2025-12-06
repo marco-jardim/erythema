@@ -62,6 +62,17 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
     }
 });
 
+function collectSelectedTechniques() {
+    const items = Array.from(document.querySelectorAll('.technique-item.selected'));
+    // Use order badge if present, fallback to DOM order
+    const ordered = items.sort((a, b) => {
+        const aNum = parseInt(a.querySelector('.order-badge').textContent) || Number.MAX_SAFE_INTEGER;
+        const bNum = parseInt(b.querySelector('.order-badge').textContent) || Number.MAX_SAFE_INTEGER;
+        return aNum - bNum;
+    });
+    return ordered.map(item => item.dataset.technique);
+}
+
 // Technique selection
 function bindTechniqueGrid(gridEl) {
     gridEl.addEventListener('click', function(e) {
@@ -148,10 +159,15 @@ function applyFilters() {
         return;
     }
 
+    selectedTechniques = collectSelectedTechniques();
     if (selectedTechniques.length === 0) {
         alert('Please select at least one technique!');
         return;
     }
+
+    // Reset view state on each run
+    resultViewMode = 'processed';
+    labToggle.checked = false;
 
     document.getElementById('loading').classList.add('active');
 
