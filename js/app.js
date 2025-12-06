@@ -1255,10 +1255,13 @@ document.getElementById('helpFab').addEventListener('click', () => showModal('he
 const HELP_STORAGE_KEY = 'erythema_help_dismissed';
 function shouldShowHelp() {
     try {
-        return localStorage.getItem(HELP_STORAGE_KEY) !== 'true';
+        const stored = localStorage.getItem(HELP_STORAGE_KEY);
+        if (stored !== null) return stored !== 'true';
+        // Default: mobile => don't show; desktop => show
+        return window.innerWidth > 768;
     } catch {
         // If storage is blocked (some mobile/private modes), show help.
-        return true;
+        return window.innerWidth > 768;
     }
 }
 function dismissHelp(permanent) {
