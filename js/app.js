@@ -94,15 +94,14 @@ async function startCamera() {
             }
         });
         cameraPreview.srcObject = cameraStream;
-        cameraWrapper.style.display = 'block';
+        cameraPreview.style.display = 'block';
+        cameraWrapper.classList.add('active');
+        cameraPreview.style.height = 'auto';
         cameraStartBtn.disabled = true;
         cameraSnapBtn.disabled = false;
         cameraStopBtn.disabled = false;
         cameraSnapBtn.classList.remove('hidden');
         cameraStopBtn.classList.remove('hidden');
-        requestAnimationFrame(() => {
-            cameraWrapper.style.opacity = '1';
-        });
     } catch (err) {
         alert('Unable to access camera: ' + err.message);
     }
@@ -114,8 +113,9 @@ function stopCamera() {
         cameraStream = null;
     }
     cameraPreview.srcObject = null;
-    cameraWrapper.style.display = 'none';
-    cameraWrapper.style.opacity = '0';
+    cameraWrapper.classList.remove('active');
+    cameraPreview.style.display = 'none';
+    cameraPreview.style.height = '0px';
     cameraStartBtn.disabled = false;
     cameraSnapBtn.disabled = true;
     cameraStopBtn.disabled = true;
@@ -179,7 +179,8 @@ function displayOriginalImage() {
 
     overlapWrapper.style.width = `100%`;
     overlapWrapper.style.maxWidth = `${width}px`;
-    overlapWrapper.style.height = `${height}px`;
+    overlapWrapper.style.aspectRatio = `${width} / ${height}`;
+    overlapWrapper.style.height = 'auto';
 
     originalCtx.drawImage(originalImage, 0, 0, width, height);
 
