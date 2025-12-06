@@ -154,9 +154,9 @@
             <p>The Erythema Index is a quantitative measure of skin redness calculated from color space coordinates. It provides a numerical value that correlates with the severity of erythema.</p>
 
             <h3>Calculation Method</h3>
-            <p>The EI is typically calculated using the formula:</p>
-            <p><strong>EI = 100 × (a* + 1.5 × b*) / L*</strong></p>
-            <p>This formula emphasizes the red component while considering overall brightness and yellow tones.</p>
+            <p>The EI is commonly calculated from visible-light reflectance using:</p>
+            <p><strong>EI = log<sub>10</sub>(R / G)</strong></p>
+            <p>where R and G are the red and green channel reflectance (or linearized pixel intensity) values. Higher EI values indicate stronger erythema.</p>
 
             <h3>Clinical Relevance</h3>
             <ul>
