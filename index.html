@@ -50,6 +50,14 @@
                     <span id="fileName" style="margin-left: 15px; color: #666;"></span>
                 </div>
 
+                <div class="control-group crop-group">
+                    <label>Optional: Crop a square before processing</label>
+                    <div class="crop-inline">
+                        <button type="button" class="btn btn-secondary" id="cropBtn" disabled>✂️ Crop square</button>
+                        <span class="helper-text">After the image loads, click to select a square region to use for all filters.</span>
+                    </div>
+                </div>
+
                 <div class="control-group">
                     <label>Step 2: Early Filters (apply before others)</label>
                     <div class="technique-grid" id="earlyGrid">
@@ -380,6 +388,21 @@
             </label>
             <div style="text-align:right; margin-top:10px;">
                 <button class="file-upload" type="button" id="helpCloseBtn">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalCrop" class="modal">
+        <div class="modal-content crop-modal">
+            <span class="close" data-close="crop">&times;</span>
+            <h2>Crop image</h2>
+            <p class="crop-hint">Drag to move or redraw the square. Only the selected square will be sent through the filters.</p>
+            <div class="crop-canvas-wrapper">
+                <canvas id="cropCanvas"></canvas>
+            </div>
+            <div class="crop-actions">
+                <button class="btn btn-secondary" type="button" id="cropCancelBtn">Cancel</button>
+                <button class="btn btn-primary" type="button" id="cropApplyBtn">Use this crop</button>
             </div>
         </div>
     </div>
