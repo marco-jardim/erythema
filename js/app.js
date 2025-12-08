@@ -1612,35 +1612,77 @@ if (citationCopyBtn && citationText) {
     });
 }
 
-// Reference drawers: single-open with smooth close
+// Reference drawers: custom single-open with smooth close + label swap
 const referenceDetails = document.querySelectorAll('.reference-details');
-function setDetailsState(el, open) {
+
+function openDetails(el) {
     const content = el.querySelector('.reference-abstract');
+    const summary = el.querySelector('summary');
     if (!content) return;
-    if (open) {
-        el.open = true;
-        content.style.maxHeight = content.scrollHeight + 'px';
-        content.style.opacity = '1';
-    } else {
-        content.style.maxHeight = '0px';
-        content.style.opacity = '0';
-        el.open = false;
-    }
+
+    // close others first
+    referenceDetails.forEach(other => {
+        if (other !== el && other.classList.contains('is-open')) {
+            closeDetails(other);
+        }
+    });
+
+    el.classList.add('is-open');
+    el.open = true;
+    content.style.maxHeight = content.scrollHeight + 'px';
+    content.style.opacity = '1';
+    content.style.transform = 'translateY(0)';
+    if (summary) summary.textContent = 'Hide abstract & contribution';
 }
 
+function closeDetails(el) {
+    const content = el.querySelector('.reference-abstract');
+    const summary = el.querySelector('summary');
+    if (!content) return;
+
+    // set current height then animate to 0
+    content.style.maxHeight = content.scrollHeight + 'px';
+    content.style.opacity = '1';
+    content.style.transform = 'translateY(0)';
+    requestAnimationFrame(() => {
+        content.style.maxHeight = '0px';
+        content.style.opacity = '0';
+        content.style.transform = 'translateY(-4px)';
+    });
+    if (summary) summary.textContent = 'Show abstract & contribution';
+
+    const onEnd = (e) => {
+        if (e.propertyName === 'max-height') {
+            el.classList.remove('is-open');
+            el.open = false;
+            content.removeEventListener('transitionend', onEnd);
+        }
+    };
+    content.addEventListener('transitionend', onEnd);
+}
+
+// Bind custom handlers to summary clicks
 referenceDetails.forEach(el => {
-    // ensure closed state styles
-    if (!el.open) setDetailsState(el, false);
-    el.addEventListener('toggle', () => {
-        if (el.open) {
-            referenceDetails.forEach(other => {
-                if (other !== el && other.open) {
-                    setDetailsState(other, false);
-                }
-            });
-            setDetailsState(el, true);
+    const summary = el.querySelector('summary');
+    if (!summary) return;
+    // initialize closed state
+    el.classList.remove('is-open');
+    el.open = false;
+    const content = el.querySelector('.reference-abstract');
+    if (content) {
+        content.style.maxHeight = '0px';
+        content.style.opacity = '0';
+        content.style.transform = 'translateY(-4px)';
+    }
+    summary.textContent = 'Show abstract & contribution';
+
+    summary.addEventListener('click', (evt) => {
+        evt.preventDefault();
+        const isOpen = el.classList.contains('is-open');
+        if (isOpen) {
+            closeDetails(el);
         } else {
-            setDetailsState(el, false);
+            openDetails(el);
         }
     });
 });
