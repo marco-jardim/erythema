@@ -306,41 +306,6 @@ input[type="file"] {
     font-size: 13px;
 }
 
-.references-nav {
-    margin: 22px 0 16px;
-    background: #ffffff;
-    border: 1px solid #dbe2ff;
-    border-radius: 12px;
-    padding: 14px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-}
-
-.reference-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: #eef2ff;
-    color: #2d2a44;
-    text-decoration: none;
-    border: 1px solid #d7dcff;
-    transition: all 0.2s ease;
-}
-
-.chip:hover {
-    border-color: #667eea;
-    color: #4b3fa4;
-    transform: translateY(-1px);
-}
-
 .reference-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
