@@ -1535,6 +1535,35 @@ document.querySelectorAll('.close[data-close]').forEach(icon => {
     icon.addEventListener('click', () => closeModal(icon.dataset.close));
 });
 
+// Tab switcher: workspace <-> scientific references
+const tabPanels = {
+    app: document.getElementById('appPanel'),
+    references: document.getElementById('referencesPanel')
+};
+const tabSwitchers = document.querySelectorAll('[data-tab-target]');
+
+function switchTab(target) {
+    if (!tabPanels[target]) return;
+    Object.entries(tabPanels).forEach(([key, panel]) => {
+        panel.classList.toggle('active', key === target);
+    });
+    tabSwitchers.forEach(btn => {
+        const isActive = btn.dataset.tabTarget === target;
+        btn.classList.toggle('active', isActive);
+        if (btn.hasAttribute('aria-selected')) {
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        }
+    });
+    document.body.classList.toggle('references-view', target === 'references');
+    if (target === 'references') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+tabSwitchers.forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tabTarget));
+});
+
 labToggle.addEventListener('change', () => {
     // Make sure the processed layer is actually visible when toggling
     setSliderRatio(0.5);

@@ -205,6 +205,287 @@ input[type="file"] {
     transition: height 0.25s ease;
 }
 
+/* ---------- Tab switcher ---------- */
+.tab-switcher {
+    margin-top: 12px;
+    display: inline-flex;
+    gap: 10px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+.tab-switch {
+    border: none;
+    border-radius: 999px;
+    padding: 10px 18px;
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-switch.active {
+    background: linear-gradient(135deg, #ffe57f 0%, #ffb347 100%);
+    color: #2b1a48;
+    box-shadow: 0 8px 18px rgba(255, 179, 71, 0.35);
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+/* ---------- References tab styling ---------- */
+.references-section {
+    padding: 28px;
+    background: radial-gradient(circle at 15% 20%, rgba(255,255,255,0.9), rgba(245,245,255,0.75)), linear-gradient(135deg, #0b1224 0%, #111a36 65%, #0b1224 100%);
+    color: #e9edff;
+}
+
+.references-hero {
+    background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 20px 22px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+}
+
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    font-size: 11px;
+    color: #ffde7a;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.references-hero h2 {
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.references-hero p {
+    color: #d9e1ff;
+    line-height: 1.6;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 14px 0 6px;
+}
+
+.ghost-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #ffde7a;
+    text-decoration: none;
+    background: rgba(255,255,255,0.06);
+    transition: all 0.2s ease;
+}
+
+.ghost-link:hover {
+    border-color: rgba(255,255,255,0.55);
+    transform: translateY(-1px);
+}
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.1);
+    color: #f7f5ff;
+    border-radius: 999px;
+    padding: 8px 14px;
+    border: 1px solid rgba(255,255,255,0.18);
+    font-size: 13px;
+}
+
+.references-nav {
+    margin: 22px 0 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.reference-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.18);
+    transition: all 0.2s ease;
+}
+
+.chip:hover {
+    border-color: #ffde7a;
+    color: #ffde7a;
+    transform: translateY(-1px);
+}
+
+.reference-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.reference-item {
+    background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 14px 34px rgba(0,0,0,0.28);
+    color: #e6e8ff;
+}
+
+.reference-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.reference-header h3 {
+    color: #ffde7a;
+    margin-bottom: 8px;
+}
+
+.reference-citation {
+    color: #d6dcff;
+    line-height: 1.6;
+}
+
+.reference-citation a {
+    color: #9ad0ff;
+    word-break: break-all;
+}
+
+.reference-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+    min-width: 140px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1d0f2b;
+    background: #ffde7a;
+}
+
+.badge-web { background: #7ee0ff; }
+.badge-conf { background: #c1ff7e; }
+.badge-review { background: #ffc1f3; }
+.badge-critique { background: #ffd1a6; }
+.badge-study { background: #c8b0ff; }
+.badge-equity { background: #ffa3b1; }
+.badge-spectral { background: #9ad0ff; }
+
+.pdf-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(154, 208, 255, 0.12);
+    color: #9ad0ff;
+    border: 1px solid rgba(154, 208, 255, 0.45);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.pdf-pill:hover {
+    background: rgba(154, 208, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.reference-details summary {
+    cursor: pointer;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #fff;
+    font-weight: 700;
+    list-style: none;
+}
+
+.reference-details[open] summary {
+    border-color: #ffde7a;
+    color: #ffde7a;
+}
+
+.reference-abstract {
+    margin-top: 10px;
+    padding: 12px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #e7ecff;
+    line-height: 1.7;
+}
+
+.reference-abstract p + p {
+    margin-top: 8px;
+}
+
+.references-license {
+    margin-top: 18px;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #dce3ff;
+}
+
+.references-license a {
+    color: #9ad0ff;
+}
+
+@media (max-width: 720px) {
+    .reference-header {
+        flex-direction: column;
+    }
+    .tab-switcher {
+        width: 100%;
+        justify-content: center;
+    }
+    .references-section {
+        padding: 18px;
+    }
+}
+
 /* Cropper */
 .crop-group {
     margin-top: 4px;

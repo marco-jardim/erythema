@@ -21,9 +21,15 @@
                 <button class="nav-link" data-modal="contrast-boost">Contrast Enhancement</button>
                 <button class="nav-link" data-modal="hair-reduction">Hair Reduction</button>
             </div>
+
+            <div class="tab-switcher" role="tablist" aria-label="Primary sections">
+                <button id="tab-workspace" class="tab-switch active" data-tab-target="app" aria-selected="true">Workspace</button>
+                <button id="tab-references" class="tab-switch" data-tab-target="references" aria-selected="false">Scientific Sources</button>
+            </div>
         </nav>
 
-        <div class="main-content">
+        <section id="appPanel" class="tab-panel active" aria-labelledby="tab-workspace">
+            <div class="main-content">
             <div class="info-box">
                 <p><strong>Note:</strong> Detecting erythema (skin redness/inflammation) in darker skin tones is challenging due to melanin masking. This tool applies various color-space transformations and spectral filters to enhance the visibility of inflammation markers.</p>
             </div>
@@ -170,7 +176,294 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <section id="referencesPanel" class="tab-panel" aria-labelledby="tab-references">
+            <div class="references-section">
+                <div class="references-hero">
+                    <p class="eyebrow">Scientific Background</p>
+                    <h2>Evidence behind the erythema enhancement filters</h2>
+                    <p>Each filter in this app is mapped to peer‑reviewed work, patents, and clinical critiques on erythema visibility across diverse skin tones. Use this tab to trace design choices, download the cited PDFs, and share the scientific context with colleagues.</p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary tab-return" type="button" data-tab-target="app">⬅ Back to workspace</button>
+                        <a class="ghost-link" href="assets/articles/" target="_blank" rel="noopener noreferrer">Open /assets/articles</a>
+                    </div>
+                    <div class="hero-meta">
+                        <span class="pill">Local PDFs live in <code>/assets/articles</code>. Drop future papers there and link them below.</span>
+                    </div>
+                </div>
+
+                <nav class="references-nav" aria-label="References navigation">
+                    <h3>Jump to a Reference</h3>
+                    <div class="reference-chips">
+                        <a class="chip" href="#ref-1-ep2976013a1">EP2976013A1</a>
+                        <a class="chip" href="#ref-2-openoximetry">OpenOximetry</a>
+                        <a class="chip" href="#ref-3-wang-2015-skin-colour">Wang 2015</a>
+                        <a class="chip" href="#ref-4-ly-2020-colorimetry">Ly 2020</a>
+                        <a class="chip" href="#ref-5-vasudevan-2024-melanometry">Vasudevan 2024</a>
+                        <a class="chip" href="#ref-6-ware-2020-fst-limitations">Ware 2020</a>
+                        <a class="chip" href="#ref-7-setaro-2002-erythema-digital-camera">Setaro 2002</a>
+                        <a class="chip" href="#ref-8-forsyth-2025-erythema-visibility">Forsyth 2025</a>
+                        <a class="chip" href="#ref-9-sonenblum-2005-spectral-imaging">Sonenblum 2005</a>
+                    </div>
+                </nav>
+
+                <div class="reference-grid">
+                    <!-- 1. EP2976013A1 ------------------------------------------------------- -->
+                    <article id="ref-1-ep2976013a1" class="reference-item">
+                        <header class="reference-header">
+                            <div>
+                                <h3>1. EP2976013A1 – Methods for Assessing Erythema</h3>
+                                <p class="reference-citation">
+                                    <strong>ABNT:</strong>
+                                    NEUBAUER, Andreas; SCHNIDAR, Harald.
+                                    <strong>Methods for assessing erythema.</strong>
+                                    European Patent EP2976013 A1, European Patent Office, 2015.
+                                    Disponível em:
+                                    &lt;<a href="https://patents.google.com/patent/EP2976013A1/en" target="_blank" rel="noopener noreferrer">https://patents.google.com/patent/EP2976013A1/en</a>&gt;.
+                                </p>
+                            </div>
+                            <div class="reference-meta">
+                                <span class="badge">Patent</span>
+                                <a class="pdf-pill" href="https://patents.google.com/patent/EP2976013A1/en" target="_blank" rel="noopener noreferrer">Patent page ↗</a>
+                            </div>
+                        </header>
+                        <details class="reference-details">
+                            <summary>Show abstract &amp; contribution</summary>
+                            <div class="reference-abstract">
+                                <p>This European patent describes colourimetric methods for objectively assessing erythema from digital skin images. The inventors propose converting RGB data to the CIELAB colour space and using the red–green opponent dimension (<em>a*</em>) as a primary indicator of erythema. To compensate for baseline pigmentation and illumination, they introduce an erythema index of the form (<em>L<sub>max</sub> – L*</em>) × <em>a*</em>, where <em>L*</em> is pixel lightness and <em>L<sub>max</sub></em> is the maximum attainable (or image‑specific) lightness value. Regions that are simultaneously darker and relatively redder are thereby emphasised, improving the contrast of subtle inflammatory changes.</p>
+                                <p>In the present erythema filter app, this patent motivates the dedicated “CIELAB Erythema Index” mode. Uploaded trichoscopy images are transformed to CIELAB, the quantity (<em>L<sub>max</sub> – L*</em>) × <em>a*</em> is computed per pixel, and the result is mapped either to a greyscale heatmap or to false colours. This follows the patent’s core idea: neutralise the average skin tone and amplify relative increases in redness, with particular benefit for areas where erythema is partially masked by melanin.</p>
+                            </div>
+                        </details>
+                    </article>
+
+                    <!-- 2. OpenOximetry Skin Color Quantification ---------------------------- -->
+                    <article id="ref-2-openoximetry" class="reference-item">
+                        <header class="reference-header">
+                            <div>
+                                <h3>2. Skin Color Quantification – OpenOximetry</h3>
+                                <p class="reference-citation">
+                                    <strong>ABNT:</strong>
+                                    OPEN OXIMETRY PROJECT.
+                                    <strong>Skin color quantification.</strong>
+                                    [S.l.: s.n.], 2023?.
+                                    Disponível em:
+                                    &lt;<a href="https://openoximetry.org/skin-color-quantification/" target="_blank" rel="noopener noreferrer">https://openoximetry.org/skin-color-quantification/</a>&gt;.
+                                    Acesso em: 8 dez. 2025.
+                                </p>
+                            </div>
+                            <div class="reference-meta">
+                                <span class="badge badge-web">Web guide</span>
+                                <a class="pdf-pill" href="https://openoximetry.org/skin-color-quantification/" target="_blank" rel="noopener noreferrer">Open online ↗</a>
+                            </div>
+                        </header>
+                        <details class="reference-details">
+                            <summary>Show abstract &amp; contribution</summary>
+                            <div class="reference-abstract">
+                                <p>The OpenOximetry “Skin Color Quantification” resource synthesises current evidence on objective skin pigmentation metrics for optical medical devices. It reviews colour spaces (especially CIELAB), the Individual Typology Angle (ITA°), melanin indices, and visual scales such as the Monk Skin Tone scale, emphasising that race and ethnicity are poor proxies for actual pigmentation. The document highlights how the <em>a*</em> channel can be used as an erythema surrogate, while <em>L*</em> and <em>b*</em> relate more directly to melanin content and tanning.</p>
+                                <p>For this app, the OpenOximetry guidelines underpin two design choices: (1) the use of CIELAB and ITA‑style metrics instead of Fitzpatrick Skin Type as internal descriptors of baseline pigmentation; and (2) the separation of “erythema‑like” channels from “melanin‑like” channels. In practice, this means that the user interface exposes filters focusing on <em>a*</em> (erythema) and on composite indices inspired by melanin metrics, while explicitly avoiding racial labels. This alignment with medical‑device recommendations is intended to support fairer performance across diverse skin tones.</p>
+                            </div>
+                        </details>
+                    </article>
+
+                    <!-- 3. Measuring Human Skin Colour -------------------------------------- -->
+                    <article id="ref-3-wang-2015-skin-colour" class="reference-item">
+                        <header class="reference-header">
+                            <div>
+                                <h3>3. Measuring Human Skin Colour</h3>
+                                <p class="reference-citation">
+                                    <strong>ABNT:</strong>
+                                    WANG, Mengmeng; XIAO, Kaida; WUERGER, Sophie; CHEUNG, Vien; LUO, Ming Ronnier.
+                                    <strong>Measuring human skin colour.</strong>
+                                    In: COLOR AND IMAGING CONFERENCE, 23., 2015.
+                                    Proceedings… Springfield: Society for Imaging Science and Technology, 2015.
+                                    p. 230‑234.
+                                </p>
+                            </div>
+                            <div class="reference-meta">
+                                <span class="badge badge-conf">Conference</span>
+                                <a class="pdf-pill" href="assets/articles/measuring-human-skin-colour-2015-wang.pdf" target="_blank" rel="noopener noreferrer">PDF (local) ↗</a>
+                            </div>
+                        </header>
+                        <details class="reference-details">
+                            <summary>Show abstract &amp; contribution</summary>
+                            <div class="reference-abstract">
+                                <p>Wang et al. present a large database of CIELAB skin measurements collected from 188 subjects across four ethnic groups, using both a tele‑spectroradiometer and a spectrophotometer at multiple body sites. They evaluate measurement repeatability and reveal systematic differences in colour distribution across locations, instruments, and ethnicities, showing that skin colours cluster in characteristic regions of the <em>L*</em>–<em>a*</em>–<em>b*</em> space. Their work also demonstrates the impact of measurement geometry and instrumentation on derived CIELAB values.</p>
+                                <p>This database informs the app’s assumptions about the “typical” range of skin tones in CIELAB space and about how much variation can be expected within a single patient. Thresholds used to normalise <em>a*</em> and to rescale erythema indices are chosen so that, for most human skin colours, the enhanced images remain numerically meaningful and do not saturate. The paper also motivates the option to aggregate over local neighbourhoods rather than relying on single‑pixel values, mirroring the authors’ emphasis on repeatability and spatial averaging in skin colour measurement.</p>
+                            </div>
+                        </details>
+                    </article>
+
+                    <!-- 4. Research Techniques Made Simple: Cutaneous Colorimetry ------------ -->
+                    <article id="ref-4-ly-2020-colorimetry" class="reference-item">
+                        <header class="reference-header">
+                            <div>
+                                <h3>4. Research Techniques Made Simple: Cutaneous Colorimetry</h3>
+                                <p class="reference-citation">
+                                    <strong>ABNT:</strong>
+                                    LY, Bao Chau K. et al.
+                                    <strong>Research techniques made simple: cutaneous colorimetry: a reliable technique for objective skin color measurement.</strong>
+                                    Journal of Investigative Dermatology, [S.l.], v. 140, n. 1, p. 3‑12.e1, 2020.
+                                    DOI: 10.1016/j.jid.2019.11.003.
+                                </p>
+                            </div>
+                            <div class="reference-meta">
+                                <span class="badge badge-review">Review</span>
+                                <a class="pdf-pill" href="assets/articles/cutaneous-colorimetry-ly-2020.pdf" target="_blank" rel="noopener noreferrer">PDF (local) ↗</a>
+                            </div>
+                        </header>
+                        <details class="reference-details">
+                            <summary>Show abstract &amp; contribution</summary>
+                            <div class="reference-abstract">
+                                <p>Ly et al. provide a didactic overview of cutaneous colorimetry, explaining how tristimulus colourimeters and spectrophotometers quantify skin colour in the CIELAB space. They discuss the main skin chromophores (melanin, haemoglobin, bilirubin, carotene) and show how <em>L*</em>, <em>a*</em> and <em>b*</em> can be interpreted in dermatology: <em>L*</em> and derived ITA° as proxies for constitutive pigmentation, <em>a*</em> for erythema, and <em>b*</em> for tanning and carotenoid content. The article also reviews practical aspects such as calibration, measurement geometry and sources of error.</p>
+                                <p>In the erythema filter app, this review serves as the conceptual backbone for all CIELAB‑based processing. The mapping of redness to the <em>a*</em> axis, the use of <em>L*</em> to compensate for baseline pigmentation, and the general idea of treating colour differences as ΔE* in a perceptually uniform space are directly inspired by the techniques summarised by Ly et al. The documentation and tooltips presented to the user adopt their terminology, helping clinicians interpret enhanced trichoscopy images within a clinically validated colour framework.</p>
+                            </div>
+                        </details>
+                    </article>
+
+                    <!-- 5. Melanometry for objective evaluation of skin pigmentation ---------- -->
+                    <article id="ref-5-vasudevan-2024-melanometry" class="reference-item">
+                        <header class="reference-header">
+                            <div>
+                                <h3>5. Melanometry for Objective Evaluation of Skin Pigmentation</h3>
+                                <p class="reference-citation">
+                                    <strong>ABNT:</strong>
+                                    VASUDEVAN, Sandhya; VOGT, William C.; WEININGER, Sandy; PFEFER, T. Joshua.
+                                    <strong>Melanometry for objective evaluation of skin pigmentation in pulse oximetry studies.</strong>
+                                    Communications Medicine, [S.l.], v. 4, n. 1, artigo 138, 2024.
+                                    DOI: 10.1038/s43856‑024‑00550‑7.
+                                </p>
+                            </div>
+                            <div class="reference-meta">
+                                <span class="badge badge-review">Review</span>
+                                <a class="pdf-pill" href="assets/articles/melanometry-vasudevan-2024.pdf" target="_blank" rel="noopener noreferrer">PDF (local) ↗</a>
+                            </div>
+                        </header>
+                        <details class="reference-details">
+                            <summary>Show abstract &amp; contribution</summary>
+                            <div class="reference-abstract">
+                                <p>This review examines optical melanometry as an objective way to quantify skin pigmentation, particularly for evaluating bias in pulse oximeters. The authors compare melanin metrics derived from colourimeters, narrow‑band spectrophotometers and more advanced spectroscopic approaches, highlighting issues such as repeatability, robustness to confounders (notably blood content) and agreement with histological melanin measurements. They conclude that colourimetry‑based indices like ITA° and <em>L*</em> perform better than purely subjective classifications, but also warn that haemoglobin and other chromophores can contaminate melanin estimates if not properly accounted for.</p>
+                                <p>In this project, the melanometry literature is used as a cautionary guide. When designing filters to highlight erythema, the app explicitly separates “erythema indices” (based on red–green contrast or <em>a*</em>) from “pigmentation descriptors” (based on <em>L*</em>, ITA‑like quantities or melanin‑inspired ratios). This separation follows the paper’s emphasis on avoiding cross‑talk between melanin and haemoglobin signals. It also motivates the choice to treat any pigmentation‑related outputs as contextual diagnostics rather than direct measures of melanin concentration.</p>
+                            </div>
+                        </details>
+                    </article>
+
+                    <!-- 6. Racial limitations of Fitzpatrick skin type ------------------------ -->
+                    <article id="ref-6-ware-2020-fst-limitations" class="reference-item">
+                        <header class="reference-header">
+                            <div>
+                                <h3>6. Racial Limitations of Fitzpatrick Skin Type</h3>
+                                <p class="reference-citation">
+                                    <strong>ABNT:</strong>
+                                    WARE, Olivia R.; DAWSON, Jessica E.; SHINOHARA, Michi M.; TAYLOR, Susan C.
+                                    <strong>Racial limitations of Fitzpatrick skin type.</strong>
+                                    Cutis, New York, v. 105, n. 2, p. 77‑80, 2020.
+                                </p>
+                            </div>
+                            <div class="reference-meta">
+                                <span class="badge badge-critique">Critique</span>
+                                <a class="pdf-pill" href="assets/articles/fitzpatrick-limitations-ware-2020.pdf" target="_blank" rel="noopener noreferrer">PDF (local) ↗</a>
+                            </div>
+                        </header>
+                        <details class="reference-details">
+                            <summary>Show abstract &amp; contribution</summary>
+                            <div class="reference-abstract">
+                                <p>Ware et al. critique the widespread use of the Fitzpatrick Skin Type (FST) scale as a proxy for race, ethnicity or static skin colour, noting that FST was originally developed to characterise sunburn response in phototherapy rather than constitutive pigmentation. Through a survey of dermatologists and trainees, they document frequent conflation of race and FST and argue that this practice obscures real variation in pigmentation and can reinforce racial essentialism. The article advocates for more culturally appropriate and clinically relevant methods to describe skin of colour, and for renewed emphasis on the original, limited purpose of FST in training.</p>
+                                <p>In the erythema filter app, this critique underpins the decision not to use Fitzpatrick types anywhere in the user interface or internal algorithms. Instead, the application relies on direct colourimetric descriptors of the photographed scalp (such as <em>L*</em>, ITA‑like angles or melanin‑inspired scores) and on patient‑neutral terminology such as “baseline pigmentation” or “darker constitutive tone”. This avoids encoding race or FST into numerical processing while still allowing the clinician to reason about how baseline pigmentation may affect erythema visibility.</p>
+                            </div>
+                        </details>
+                    </article>
+
+                    <!-- 7. Quantification of erythema using digital camera -------------------- -->
+                    <article id="ref-7-setaro-2002-erythema-digital-camera" class="reference-item">
+                        <header class="reference-header">
+                            <div>
+                                <h3>7. Quantification of Erythema Using Digital Camera</h3>
+                                <p class="reference-citation">
+                                    <strong>ABNT:</strong>
+                                    SETARO, Michele; SPARAVIGNA, Adele.
+                                    <strong>Quantification of erythema using digital camera and computer-based colour image analysis: a multicentre study.</strong>
+                                    Skin Research and Technology, [S.l.], v. 8, n. 2, p. 84‑88, 2002.
+                                    DOI: 10.1034/j.1600‑0846.2002.00328.x.
+                                </p>
+                            </div>
+                            <div class="reference-meta">
+                                <span class="badge badge-study">Study</span>
+                                <a class="pdf-pill" href="assets/articles/digital-camera-erythema-setaro-2002.pdf" target="_blank" rel="noopener noreferrer">PDF (local) ↗</a>
+                            </div>
+                        </header>
+                        <details class="reference-details">
+                            <summary>Show abstract &amp; contribution</summary>
+                            <div class="reference-abstract">
+                                <p>Setaro and Sparavigna describe a multicentre study in which conventional clinical grading of erythema is compared with quantitative indices derived from colour‑calibrated digital photographs. A reference colour marker is used to normalise RGB values across lighting conditions, and an erythema index is computed essentially as the difference between red and green channels within a selected skin region. The study reports good correlation between this digital erythema index and clinical scores, demonstrating that low‑cost cameras can support reproducible erythema quantification when combined with proper colour normalisation.</p>
+                                <p>This paper directly informs the “Simple Erythema Index (R–G)” filter in the app. The pipeline includes an optional per‑image normalisation step, conceptually similar to calibrating against a colour marker, before computing <code>EI = R – G</code> per pixel. The Setaro &amp; Sparavigna results are used as justification for exposing this relatively simple metric alongside more sophisticated LAB‑based methods, and for presenting it as a baseline digital analogue of clinical erythema grading.</p>
+                            </div>
+                        </details>
+                    </article>
+
+                    <!-- 8. Diagnostic Disparities in Erythema Visibility ---------------------- -->
+                    <article id="ref-8-forsyth-2025-erythema-visibility" class="reference-item">
+                        <header class="reference-header">
+                            <div>
+                                <h3>8. Diagnostic Disparities in Erythema Visibility</h3>
+                                <p class="reference-citation">
+                                    <strong>ABNT:</strong>
+                                    FORSYTH, Alyssa et al.
+                                    <strong>Diagnostic disparities in erythema visibility: a call to redefine inflammatory assessment in diverse skin tones.</strong>
+                                    Cureus, [S.l.], v. 17, n. 10, e94930, 2025.
+                                    DOI: 10.7759/cureus.94930.
+                                </p>
+                            </div>
+                            <div class="reference-meta">
+                                <span class="badge badge-equity">Equity</span>
+                                <a class="pdf-pill" href="assets/articles/erythema-visibility-forsyth-2025.pdf" target="_blank" rel="noopener noreferrer">PDF (local) ↗</a>
+                            </div>
+                        </header>
+                        <details class="reference-details">
+                            <summary>Show abstract &amp; contribution</summary>
+                            <div class="reference-abstract">
+                                <p>Forsyth et al. review how reliance on visible erythema as a cardinal sign of inflammation leads to underdiagnosis and misclassification of inflammatory dermatoses in patients with darker skin tones. They highlight structural biases in training materials, scoring systems such as EASI and PASI, and clinical research designs that assume erythema is equally visible across all skin types. The authors call for pigment‑inclusive assessment methods, including the use of high‑frequency ultrasound, infrared imaging, spectrophotometry and modified visual scales, alongside better representation of skin of colour in educational resources.</p>
+                                <p>Conceptually, this review is the ethical and clinical justification for the app’s existence. The application is framed explicitly as a tool to support more equitable assessment of inflammatory changes in the scalp, especially where visible erythema is masked by melanin. Design decisions such as using colour‑agnostic terminology, providing greyscale or false‑colour maps rather than raw “redness”, and foregrounding the limitations of purely visual inspection are aligned with the authors’ call to redefine erythema assessment in a way that better serves patients with richly pigmented skin.</p>
+                            </div>
+                        </details>
+                    </article>
+
+                    <!-- 9. Non-Invasive Erythema Detection Using Spectral Imaging ------------- -->
+                    <article id="ref-9-sonenblum-2005-spectral-imaging" class="reference-item">
+                        <header class="reference-header">
+                            <div>
+                                <h3>9. Non-Invasive Erythema Detection Using Spectral Imaging</h3>
+                                <p class="reference-citation">
+                                    <strong>ABNT:</strong>
+                                    SONENBLUM, Sharon E.; SPRIGLE, Stephen; WEST, Leanne; WOOD, Jack.
+                                    <strong>Non‑invasive erythema detection using spectral imaging.</strong>
+                                    In: RESNA 28th Annual Conference, 2005, Atlanta.
+                                    Proceedings… Arlington: RESNA Press, 2005.
+                                </p>
+                            </div>
+                            <div class="reference-meta">
+                                <span class="badge badge-spectral">Spectral</span>
+                                <a class="pdf-pill" href="https://resna.org/sites/default/files/legacy/conference/proceedings/2005/StudentScientific/Student/Demos/sonenblum.html" target="_blank" rel="noopener noreferrer">Proceedings ↗</a>
+                            </div>
+                        </header>
+                        <details class="reference-details">
+                            <summary>Show abstract &amp; contribution</summary>
+                            <div class="reference-abstract">
+                                <p>Sonenblum et al. investigate the use of multispectral imaging with 12 narrow‑band filters (400–950&nbsp;nm) to detect pressure‑induced erythema in subjects with a wide range of skin tones. By linearly combining images from bands where haemoglobin absorbs strongly (blue‑green) and suppressing those where melanin dominates (red/near‑infrared), they construct composite images in which erythema stands out more clearly, particularly in darkly pigmented skin. Their analysis demonstrates that suitable spectral weighting can make erythema visible even when it is largely invisible in standard colour photographs.</p>
+                                <p>Although the app operates on standard RGB trichoscopy images rather than full multispectral cubes, its “Channel Ratios / Spectral‑Inspired” filters are conceptually derived from this work. Ratios such as <code>G/R</code>, <code>R/G</code> and <code>(B × G) / R</code> emulate the idea of giving more weight to shorter‑wavelength channels (green and blue) while down‑weighting red, thereby enhancing haemoglobin‑related contrast relative to melanin. The spectral imaging study thus provides a physiological rationale for the specific linear and non‑linear RGB combinations implemented in the app.</p>
+                            </div>
+                        </details>
+                    </article>
+                </div>
+
+                <footer id="license" class="references-license">
+                    <h3>License (GPLv3)</h3>
+                    <p>This erythema enhancement application, including this reference section, is free software: you can redistribute it and/or modify it under the terms of the <strong>GNU General Public License</strong> as published by the Free Software Foundation, version 3 of the License.</p>
+                    <p>This program is distributed in the hope that it will be useful, but <strong>WITHOUT ANY WARRANTY</strong>; without even the implied warranty of <strong>MERCHANTABILITY</strong> or <strong>FITNESS FOR A PARTICULAR PURPOSE</strong>. See the <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank" rel="noopener noreferrer">GNU General Public License</a> for more details.</p>
+                    <p>You should have received a copy of the GNU General Public License along with this program. If not, see <a href="https://www.gnu.org/licenses/" target="_blank" rel="noopener noreferrer">https://www.gnu.org/licenses/</a>.</p>
+                </footer>
+            </div>
+        </section>
     </div>
 
     <button id="helpFab" class="help-fab" aria-label="Help and quick tour">❔</button>
