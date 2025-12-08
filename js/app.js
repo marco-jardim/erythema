@@ -1541,6 +1541,9 @@ const tabPanels = {
     references: document.getElementById('referencesPanel')
 };
 const tabSwitchers = document.querySelectorAll('[data-tab-target]');
+const citationSelect = document.getElementById('citationStyle');
+const citationText = document.getElementById('citationText');
+const citationCopyBtn = document.getElementById('citationCopyBtn');
 
 function switchTab(target) {
     if (!tabPanels[target]) return;
@@ -1562,6 +1565,84 @@ function switchTab(target) {
 
 tabSwitchers.forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tabTarget));
+});
+
+// Citation helper
+const citationDate = '8 Dec 2025';
+const citationDateLong = 'December 8, 2025';
+const citationDateIso = '2025';
+const citationTitle = 'Erythema Detection Tool: Scientific Background';
+const citationAuthor = 'Marco Jardim';
+
+function buildCitations(url) {
+    return {
+        abnt: `${citationAuthor.toUpperCase()}. ${citationTitle}. Disponível em: <${url}>. Acesso em: ${citationDate}.`,
+        apa: `Jardim, M. (${citationDateIso}). ${citationTitle}. Retrieved ${citationDateLong}, from ${url}`,
+        vancouver: `Jardim M. ${citationTitle} [Internet]. ${citationDate}. Available from: ${url}`,
+        ieee: `M. Jardim, “${citationTitle},” ${citationDate}. [Online]. Available: ${url}`,
+        mla: `Jardim, Marco. "${citationTitle}." ${citationDate}. Web. ${url}.`,
+        chicago: `Jardim, Marco. ${citationDateIso}. "${citationTitle}." December 8. ${url}.`
+    };
+}
+
+function updateCitation() {
+    if (!citationSelect || !citationText) return;
+    const url = window.location.href;
+    const map = buildCitations(url);
+    const key = citationSelect.value || 'abnt';
+    citationText.value = map[key] || map.abnt;
+}
+
+if (citationSelect) {
+    citationSelect.addEventListener('change', updateCitation);
+}
+
+if (citationCopyBtn && citationText) {
+    citationCopyBtn.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(citationText.value);
+            citationCopyBtn.textContent = '✅ Copied';
+            setTimeout(() => citationCopyBtn.textContent = '📋 Copy', 1200);
+        } catch {
+            citationText.select();
+            document.execCommand('copy');
+            citationCopyBtn.textContent = '✅ Copied';
+            setTimeout(() => citationCopyBtn.textContent = '📋 Copy', 1200);
+        }
+    });
+}
+
+// Reference drawers: single-open with smooth close
+const referenceDetails = document.querySelectorAll('.reference-details');
+function setDetailsState(el, open) {
+    const content = el.querySelector('.reference-abstract');
+    if (!content) return;
+    if (open) {
+        el.open = true;
+        content.style.maxHeight = content.scrollHeight + 'px';
+        content.style.opacity = '1';
+    } else {
+        content.style.maxHeight = '0px';
+        content.style.opacity = '0';
+        el.open = false;
+    }
+}
+
+referenceDetails.forEach(el => {
+    // ensure closed state styles
+    if (!el.open) setDetailsState(el, false);
+    el.addEventListener('toggle', () => {
+        if (el.open) {
+            referenceDetails.forEach(other => {
+                if (other !== el && other.open) {
+                    setDetailsState(other, false);
+                }
+            });
+            setDetailsState(el, true);
+        } else {
+            setDetailsState(el, false);
+        }
+    });
 });
 
 labToggle.addEventListener('change', () => {
@@ -1668,6 +1749,9 @@ window.addEventListener('load', () => {
             showModal('help');
         }
     }, 300);
+    updateCitation();
+    // reset drawer heights after fonts render
+    referenceDetails.forEach(el => setDetailsState(el, el.open));
 });
 
 // Expose functions for inline handlers

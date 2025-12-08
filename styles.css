@@ -246,16 +246,8 @@ input[type="file"] {
 /* ---------- References tab styling ---------- */
 .references-section {
     padding: 28px;
-    background: radial-gradient(circle at 15% 20%, rgba(255,255,255,0.9), rgba(245,245,255,0.75)), linear-gradient(135deg, #0b1224 0%, #111a36 65%, #0b1224 100%);
-    color: #e9edff;
-}
-
-.references-hero {
-    background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    padding: 20px 22px;
-    box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+    background: linear-gradient(140deg, #fdfbff 0%, #f0f4ff 55%, #e8efff 100%);
+    color: #1f1b2e;
 }
 
 .eyebrow {
@@ -273,7 +265,7 @@ input[type="file"] {
 }
 
 .references-hero p {
-    color: #d9e1ff;
+    color: #f0f2ff;
     line-height: 1.6;
 }
 
@@ -316,10 +308,11 @@ input[type="file"] {
 
 .references-nav {
     margin: 22px 0 16px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: #ffffff;
+    border: 1px solid #dbe2ff;
     border-radius: 12px;
     padding: 14px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
 }
 
 .reference-chips {
@@ -335,16 +328,16 @@ input[type="file"] {
     gap: 6px;
     padding: 8px 12px;
     border-radius: 999px;
-    background: rgba(255,255,255,0.12);
-    color: #fff;
+    background: #eef2ff;
+    color: #2d2a44;
     text-decoration: none;
-    border: 1px solid rgba(255,255,255,0.18);
+    border: 1px solid #d7dcff;
     transition: all 0.2s ease;
 }
 
 .chip:hover {
-    border-color: #ffde7a;
-    color: #ffde7a;
+    border-color: #667eea;
+    color: #4b3fa4;
     transform: translateY(-1px);
 }
 
@@ -355,12 +348,12 @@ input[type="file"] {
 }
 
 .reference-item {
-    background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-    border: 1px solid rgba(255,255,255,0.12);
+    background: #ffffff;
+    border: 1px solid #e3e7ff;
     border-radius: 14px;
     padding: 16px;
-    box-shadow: 0 14px 34px rgba(0,0,0,0.28);
-    color: #e6e8ff;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+    color: #1f1b2e;
 }
 
 .reference-header {
@@ -371,17 +364,17 @@ input[type="file"] {
 }
 
 .reference-header h3 {
-    color: #ffde7a;
+    color: #4b3fa4;
     margin-bottom: 8px;
 }
 
 .reference-citation {
-    color: #d6dcff;
+    color: #2c2a3b;
     line-height: 1.6;
 }
 
 .reference-citation a {
-    color: #9ad0ff;
+    color: #3249d7;
     word-break: break-all;
 }
 
@@ -400,16 +393,17 @@ input[type="file"] {
     font-size: 12px;
     font-weight: 700;
     color: #1d0f2b;
-    background: #ffde7a;
+    background: #ffd86b;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-.badge-web { background: #7ee0ff; }
+.badge-web { background: #a0e7ff; }
 .badge-conf { background: #c1ff7e; }
 .badge-review { background: #ffc1f3; }
 .badge-critique { background: #ffd1a6; }
-.badge-study { background: #c8b0ff; }
-.badge-equity { background: #ffa3b1; }
-.badge-spectral { background: #9ad0ff; }
+.badge-study { background: #d7c5ff; }
+.badge-equity { background: #ffb3c8; }
+.badge-spectral { background: #b5c9ff; }
 
 .pdf-pill {
     display: inline-flex;
@@ -417,9 +411,9 @@ input[type="file"] {
     gap: 6px;
     padding: 8px 12px;
     border-radius: 10px;
-    background: rgba(154, 208, 255, 0.12);
-    color: #9ad0ff;
-    border: 1px solid rgba(154, 208, 255, 0.45);
+    background: rgba(102, 126, 234, 0.12);
+    color: #4f3fa4;
+    border: 1px solid rgba(102, 126, 234, 0.45);
     text-decoration: none;
     transition: all 0.2s ease;
 }
@@ -434,30 +428,40 @@ input[type="file"] {
     margin-top: 10px;
     padding: 10px 12px;
     border-radius: 10px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: #fff;
+    background: #f4f6ff;
+    border: 1px solid #dbe2ff;
+    color: #2d2a44;
     font-weight: 700;
     list-style: none;
+    font-size: 14px;
 }
 
 .reference-details[open] summary {
-    border-color: #ffde7a;
-    color: #ffde7a;
+    border-color: #667eea;
+    color: #4b3fa4;
 }
 
 .reference-abstract {
     margin-top: 10px;
     padding: 12px;
-    background: rgba(0,0,0,0.15);
+    background: #ffffff;
     border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.08);
-    color: #e7ecff;
+    border: 1px solid #e3e7ff;
+    color: #2e2a40;
     line-height: 1.7;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.35s ease, opacity 0.25s ease;
 }
 
 .reference-abstract p + p {
     margin-top: 8px;
+}
+
+.reference-details[open] .reference-abstract {
+    max-height: 1200px;
+    opacity: 1;
 }
 
 .references-license {
@@ -473,6 +477,67 @@ input[type="file"] {
     color: #9ad0ff;
 }
 
+.cite-box {
+    margin: 18px 0;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.24);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+}
+
+.cite-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.cite-top h4 {
+    color: #fff;
+    margin-top: 4px;
+}
+
+.cite-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cite-controls label {
+    color: #f7f5ff;
+    font-weight: 600;
+}
+
+#citationStyle {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.16);
+    color: #fff;
+    min-width: 170px;
+}
+
+.cite-text {
+    width: 100%;
+    margin-top: 10px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.22);
+    color: #f7f5ff;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+}
+
+.cite-hint {
+    margin-top: 8px;
+    color: #e9e4ff;
+    font-size: 13px;
+}
+
 @media (max-width: 720px) {
     .reference-header {
         flex-direction: column;
@@ -483,6 +548,11 @@ input[type="file"] {
     }
     .references-section {
         padding: 18px;
+    }
+    .cite-controls {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
     }
 }
 
@@ -645,12 +715,13 @@ input[type="file"] {
 }
 
 .btn-secondary {
-    background: #e0e0e0;
-    color: #333;
+    background: rgba(102, 126, 234, 0.12);
+    color: #4b3fa4;
+    border: 1px solid rgba(102,126,234,0.28);
 }
 
 .btn-secondary:hover {
-    background: #d0d0d0;
+    background: rgba(102,126,234,0.2);
 }
 
 .button-group {

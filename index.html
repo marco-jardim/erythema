@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Erythema Detection - Skin Inflammation Analysis</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,19 +13,19 @@
             <h1>🔬 Erythema Detection Tool</h1>
             <p>Advanced spectral filtering techniques for enhanced erythema detection in darker skin tones</p>
             <div class="nav-links">
-                <button class="nav-link" data-modal="erythema">About Erythema</button>
-                <button class="nav-link" data-modal="a-star">a* Channel</button>
-                <button class="nav-link" data-modal="erythema-index">Erythema Index</button>
-                <button class="nav-link" data-modal="ita">ITA° Index</button>
-                <button class="nav-link" data-modal="rgb-ratio">RGB Ratio</button>
-                <button class="nav-link" data-modal="melanin">Melanin Filter</button>
-                <button class="nav-link" data-modal="contrast-boost">Contrast Enhancement</button>
-                <button class="nav-link" data-modal="hair-reduction">Hair Reduction</button>
+                <button class="nav-link" data-modal="erythema">ℹ️ About Erythema</button>
+                <button class="nav-link" data-modal="a-star">🧪 a* Channel</button>
+                <button class="nav-link" data-modal="erythema-index">📈 Erythema Index</button>
+                <button class="nav-link" data-modal="ita">📏 ITA° Index</button>
+                <button class="nav-link" data-modal="rgb-ratio">🌈 RGB Ratio</button>
+                <button class="nav-link" data-modal="melanin">🌓 Melanin Filter</button>
+                <button class="nav-link" data-modal="contrast-boost">🔆 Contrast Boost</button>
+                <button class="nav-link" data-modal="hair-reduction">✂️ Hair Reduction</button>
             </div>
 
             <div class="tab-switcher" role="tablist" aria-label="Primary sections">
-                <button id="tab-workspace" class="tab-switch active" data-tab-target="app" aria-selected="true">Workspace</button>
-                <button id="tab-references" class="tab-switch" data-tab-target="references" aria-selected="false">Scientific Sources</button>
+                <button id="tab-workspace" class="tab-switch active" data-tab-target="app" aria-selected="true">🛠️ Workspace</button>
+                <button id="tab-references" class="tab-switch" data-tab-target="references" aria-selected="false">📚 Scientific Sources</button>
             </div>
         </nav>
 
@@ -180,17 +181,27 @@
 
         <section id="referencesPanel" class="tab-panel" aria-labelledby="tab-references">
             <div class="references-section">
-                <div class="references-hero">
-                    <p class="eyebrow">Scientific Background</p>
-                    <h2>Evidence behind the erythema enhancement filters</h2>
-                    <p>Each filter in this app is mapped to peer‑reviewed work, patents, and clinical critiques on erythema visibility across diverse skin tones. Use this tab to trace design choices, download the cited PDFs, and share the scientific context with colleagues.</p>
-                    <div class="hero-actions">
-                        <button class="btn btn-primary tab-return" type="button" data-tab-target="app">⬅ Back to workspace</button>
-                        <a class="ghost-link" href="assets/articles/" target="_blank" rel="noopener noreferrer">Open /assets/articles</a>
+                <div class="cite-box" aria-labelledby="cite-label">
+                    <div class="cite-top">
+                        <div>
+                            <p class="eyebrow" id="cite-label">Cite this page</p>
+                            <h4>Copy a ready-to-use reference</h4>
+                        </div>
+                        <div class="cite-controls">
+                            <label for="citationStyle">Style</label>
+                            <select id="citationStyle">
+                                <option value="abnt">ABNT</option>
+                                <option value="apa">APA 7</option>
+                                <option value="vancouver">Vancouver</option>
+                                <option value="ieee">IEEE</option>
+                                <option value="mla">MLA 9</option>
+                                <option value="chicago">Chicago (Author–Date)</option>
+                            </select>
+                            <button id="citationCopyBtn" class="btn btn-secondary">📋 Copy</button>
+                        </div>
                     </div>
-                    <div class="hero-meta">
-                        <span class="pill">Local PDFs live in <code>/assets/articles</code>. Drop future papers there and link them below.</span>
-                    </div>
+                    <textarea id="citationText" class="cite-text" rows="4" readonly></textarea>
+                    <p class="cite-hint">URL updates automatically; citation date is set to 8 Dec 2025.</p>
                 </div>
 
                 <nav class="references-nav" aria-label="References navigation">
@@ -215,12 +226,7 @@
                             <div>
                                 <h3>1. EP2976013A1 – Methods for Assessing Erythema</h3>
                                 <p class="reference-citation">
-                                    <strong>ABNT:</strong>
-                                    NEUBAUER, Andreas; SCHNIDAR, Harald.
-                                    <strong>Methods for assessing erythema.</strong>
-                                    European Patent EP2976013 A1, European Patent Office, 2015.
-                                    Disponível em:
-                                    &lt;<a href="https://patents.google.com/patent/EP2976013A1/en" target="_blank" rel="noopener noreferrer">https://patents.google.com/patent/EP2976013A1/en</a>&gt;.
+                                    Neubauer, A., &amp; Schnidar, H. (2015). <strong>Methods for assessing erythema (EP2976013A1)</strong>. European Patent Office. <a href="https://patents.google.com/patent/EP2976013A1/en" target="_blank" rel="noopener noreferrer">https://patents.google.com/patent/EP2976013A1/en</a>
                                 </p>
                             </div>
                             <div class="reference-meta">
@@ -243,13 +249,7 @@
                             <div>
                                 <h3>2. Skin Color Quantification – OpenOximetry</h3>
                                 <p class="reference-citation">
-                                    <strong>ABNT:</strong>
-                                    OPEN OXIMETRY PROJECT.
-                                    <strong>Skin color quantification.</strong>
-                                    [S.l.: s.n.], 2023?.
-                                    Disponível em:
-                                    &lt;<a href="https://openoximetry.org/skin-color-quantification/" target="_blank" rel="noopener noreferrer">https://openoximetry.org/skin-color-quantification/</a>&gt;.
-                                    Acesso em: 8 dez. 2025.
+                                    Open Oximetry Project. (2023). <strong>Skin color quantification</strong>. Retrieved December 8, 2025, from <a href="https://openoximetry.org/skin-color-quantification/" target="_blank" rel="noopener noreferrer">https://openoximetry.org/skin-color-quantification/</a>
                                 </p>
                             </div>
                             <div class="reference-meta">
@@ -272,12 +272,7 @@
                             <div>
                                 <h3>3. Measuring Human Skin Colour</h3>
                                 <p class="reference-citation">
-                                    <strong>ABNT:</strong>
-                                    WANG, Mengmeng; XIAO, Kaida; WUERGER, Sophie; CHEUNG, Vien; LUO, Ming Ronnier.
-                                    <strong>Measuring human skin colour.</strong>
-                                    In: COLOR AND IMAGING CONFERENCE, 23., 2015.
-                                    Proceedings… Springfield: Society for Imaging Science and Technology, 2015.
-                                    p. 230‑234.
+                                    Wang, M., Xiao, K., Wuerger, S., Cheung, V., &amp; Luo, M. R. (2015). <strong>Measuring human skin colour</strong>. In <em>Proceedings of the 23rd Color and Imaging Conference</em> (pp. 230–234). Springfield, VA: Society for Imaging Science and Technology.
                                 </p>
                             </div>
                             <div class="reference-meta">
@@ -300,11 +295,7 @@
                             <div>
                                 <h3>4. Research Techniques Made Simple: Cutaneous Colorimetry</h3>
                                 <p class="reference-citation">
-                                    <strong>ABNT:</strong>
-                                    LY, Bao Chau K. et al.
-                                    <strong>Research techniques made simple: cutaneous colorimetry: a reliable technique for objective skin color measurement.</strong>
-                                    Journal of Investigative Dermatology, [S.l.], v. 140, n. 1, p. 3‑12.e1, 2020.
-                                    DOI: 10.1016/j.jid.2019.11.003.
+                                    Ly, B. C. K., et al. (2020). <strong>Research techniques made simple: Cutaneous colorimetry: A reliable technique for objective skin color measurement.</strong> <em>Journal of Investigative Dermatology, 140</em>(1), 3–12.e1. https://doi.org/10.1016/j.jid.2019.11.003
                                 </p>
                             </div>
                             <div class="reference-meta">
@@ -327,11 +318,7 @@
                             <div>
                                 <h3>5. Melanometry for Objective Evaluation of Skin Pigmentation</h3>
                                 <p class="reference-citation">
-                                    <strong>ABNT:</strong>
-                                    VASUDEVAN, Sandhya; VOGT, William C.; WEININGER, Sandy; PFEFER, T. Joshua.
-                                    <strong>Melanometry for objective evaluation of skin pigmentation in pulse oximetry studies.</strong>
-                                    Communications Medicine, [S.l.], v. 4, n. 1, artigo 138, 2024.
-                                    DOI: 10.1038/s43856‑024‑00550‑7.
+                                    Vasudevan, S., Vogt, W. C., Weininger, S., &amp; Pfefer, T. J. (2024). <strong>Melanometry for objective evaluation of skin pigmentation in pulse oximetry studies.</strong> <em>Communications Medicine, 4</em>(1), Article 138. https://doi.org/10.1038/s43856-024-00550-7
                                 </p>
                             </div>
                             <div class="reference-meta">
@@ -354,10 +341,7 @@
                             <div>
                                 <h3>6. Racial Limitations of Fitzpatrick Skin Type</h3>
                                 <p class="reference-citation">
-                                    <strong>ABNT:</strong>
-                                    WARE, Olivia R.; DAWSON, Jessica E.; SHINOHARA, Michi M.; TAYLOR, Susan C.
-                                    <strong>Racial limitations of Fitzpatrick skin type.</strong>
-                                    Cutis, New York, v. 105, n. 2, p. 77‑80, 2020.
+                                    Ware, O. R., Dawson, J. E., Shinohara, M. M., &amp; Taylor, S. C. (2020). <strong>Racial limitations of Fitzpatrick skin type.</strong> <em>Cutis, 105</em>(2), 77–80.
                                 </p>
                             </div>
                             <div class="reference-meta">
@@ -380,11 +364,7 @@
                             <div>
                                 <h3>7. Quantification of Erythema Using Digital Camera</h3>
                                 <p class="reference-citation">
-                                    <strong>ABNT:</strong>
-                                    SETARO, Michele; SPARAVIGNA, Adele.
-                                    <strong>Quantification of erythema using digital camera and computer-based colour image analysis: a multicentre study.</strong>
-                                    Skin Research and Technology, [S.l.], v. 8, n. 2, p. 84‑88, 2002.
-                                    DOI: 10.1034/j.1600‑0846.2002.00328.x.
+                                    Setaro, M., &amp; Sparavigna, A. (2002). <strong>Quantification of erythema using digital camera and computer-based colour image analysis: A multicentre study.</strong> <em>Skin Research and Technology, 8</em>(2), 84–88. https://doi.org/10.1034/j.1600-0846.2002.00328.x
                                 </p>
                             </div>
                             <div class="reference-meta">
@@ -407,11 +387,7 @@
                             <div>
                                 <h3>8. Diagnostic Disparities in Erythema Visibility</h3>
                                 <p class="reference-citation">
-                                    <strong>ABNT:</strong>
-                                    FORSYTH, Alyssa et al.
-                                    <strong>Diagnostic disparities in erythema visibility: a call to redefine inflammatory assessment in diverse skin tones.</strong>
-                                    Cureus, [S.l.], v. 17, n. 10, e94930, 2025.
-                                    DOI: 10.7759/cureus.94930.
+                                    Forsyth, A., et al. (2025). <strong>Diagnostic disparities in erythema visibility: A call to redefine inflammatory assessment in diverse skin tones.</strong> <em>Cureus, 17</em>(10), e94930. https://doi.org/10.7759/cureus.94930
                                 </p>
                             </div>
                             <div class="reference-meta">
@@ -434,11 +410,7 @@
                             <div>
                                 <h3>9. Non-Invasive Erythema Detection Using Spectral Imaging</h3>
                                 <p class="reference-citation">
-                                    <strong>ABNT:</strong>
-                                    SONENBLUM, Sharon E.; SPRIGLE, Stephen; WEST, Leanne; WOOD, Jack.
-                                    <strong>Non‑invasive erythema detection using spectral imaging.</strong>
-                                    In: RESNA 28th Annual Conference, 2005, Atlanta.
-                                    Proceedings… Arlington: RESNA Press, 2005.
+                                    Sonenblum, S. E., Sprigle, S., West, L., &amp; Wood, J. (2005). <strong>Non‑invasive erythema detection using spectral imaging.</strong> In <em>Proceedings of the RESNA 28th Annual Conference</em>. Arlington, VA: RESNA Press.
                                 </p>
                             </div>
                             <div class="reference-meta">
@@ -455,13 +427,6 @@
                         </details>
                     </article>
                 </div>
-
-                <footer id="license" class="references-license">
-                    <h3>License (GPLv3)</h3>
-                    <p>This erythema enhancement application, including this reference section, is free software: you can redistribute it and/or modify it under the terms of the <strong>GNU General Public License</strong> as published by the Free Software Foundation, version 3 of the License.</p>
-                    <p>This program is distributed in the hope that it will be useful, but <strong>WITHOUT ANY WARRANTY</strong>; without even the implied warranty of <strong>MERCHANTABILITY</strong> or <strong>FITNESS FOR A PARTICULAR PURPOSE</strong>. See the <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank" rel="noopener noreferrer">GNU General Public License</a> for more details.</p>
-                    <p>You should have received a copy of the GNU General Public License along with this program. If not, see <a href="https://www.gnu.org/licenses/" target="_blank" rel="noopener noreferrer">https://www.gnu.org/licenses/</a>.</p>
-                </footer>
             </div>
         </section>
     </div>
@@ -680,7 +645,7 @@
                 <input type="checkbox" id="helpDontShow"> Don't show this again
             </label>
             <div style="text-align:right; margin-top:10px;">
-                <button class="file-upload" type="button" id="helpCloseBtn">Got it</button>
+                <button class="file-upload" type="button" id="helpCloseBtn">👍 Got it</button>
             </div>
         </div>
     </div>
@@ -694,8 +659,8 @@
                 <canvas id="cropCanvas"></canvas>
             </div>
             <div class="crop-actions">
-                <button class="btn btn-secondary" type="button" id="cropCancelBtn">Cancel</button>
-                <button class="btn btn-primary" type="button" id="cropApplyBtn">Use this crop</button>
+                <button class="btn btn-secondary" type="button" id="cropCancelBtn">↩️ Cancel</button>
+                <button class="btn btn-primary" type="button" id="cropApplyBtn">✅ Use this crop</button>
             </div>
         </div>
     </div>
