@@ -253,8 +253,8 @@ input[type="file"] {
 .eyebrow {
     text-transform: uppercase;
     letter-spacing: 1.6px;
-    font-size: 11px;
-    color: #ffde7a;
+    font-size: 16px;
+    color: #5e4a10;
     margin-bottom: 6px;
     font-weight: 700;
 }
@@ -354,6 +354,9 @@ input[type="file"] {
     padding: 16px;
     box-shadow: 0 12px 28px rgba(0,0,0,0.08);
     color: #1f1b2e;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .reference-header {
@@ -380,10 +383,11 @@ input[type="file"] {
 
 .reference-meta {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 10px;
-    align-items: flex-start;
-    min-width: 140px;
+    align-items: center;
+    flex-wrap: wrap;
+    min-width: 180px;
 }
 
 .badge {
@@ -464,6 +468,10 @@ input[type="file"] {
     opacity: 1;
 }
 
+.reference-details {
+    margin-top: auto;
+}
+
 .references-license {
     margin-top: 18px;
     padding: 14px;
@@ -506,35 +514,41 @@ input[type="file"] {
 }
 
 .cite-controls label {
-    color: #f7f5ff;
+    color: var(--text-main);
     font-weight: 600;
 }
 
 #citationStyle {
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.4);
-    background: rgba(255,255,255,0.16);
-    color: #fff;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #c3ccff;
+    background: #f7f8ff;
+    color: var(--text-main);
     min-width: 170px;
 }
 
 .cite-text {
     width: 100%;
     margin-top: 10px;
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.22);
-    color: #f7f5ff;
-    border-radius: 10px;
+    background: #f7f8ff;
+    border: 1px solid #a8b3ff;
+    color: #0b1021;
+    border-radius: var(--radius-sm);
     padding: 12px;
     font-size: 14px;
     line-height: 1.5;
     resize: none;
+    caret-color: #4f46e5;
+}
+
+.cite-text::selection {
+    background: #cbd5ff;
+    color: #0b1021;
 }
 
 .cite-hint {
     margin-top: 8px;
-    color: #e9e4ff;
+    color: var(--text-muted);
     font-size: 13px;
 }
 

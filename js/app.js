@@ -1589,7 +1589,7 @@ function updateCitation() {
     if (!citationSelect || !citationText) return;
     const url = window.location.href;
     const map = buildCitations(url);
-    const key = citationSelect.value || 'abnt';
+    const key = citationSelect.value || 'apa';
     citationText.value = map[key] || map.abnt;
 }
 
